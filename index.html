@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARBARI — دربار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Vazirmatn:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+–black: #0a0a0a;
+–gold: #C9A961;
+–gold-dim: rgba(201,169,97,0.3);
+–cream: #F5F1E8;
+–white: #ffffff;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+background: var(–black);
+color: var(–cream);
+font-family: ‘Vazirmatn’, sans-serif;
+overflow-x: hidden;
+}
+
+/* ── NAVBAR ── */
+nav {
+position: fixed;
+top: 0; left: 0; right: 0;
+z-index: 100;
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 1.4rem 2.5rem;
+transition: background 0.5s;
+}
+nav.scrolled {
+background: rgba(10,10,10,0.85);
+backdrop-filter: blur(12px);
+}
+.nav-logo {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.5rem;
+font-weight: 300;
+letter-spacing: 0.4em;
+color: var(–cream);
+text-transform: uppercase;
+}
+.nav-lang {
+display: flex;
+gap: 0.5rem;
+font-size: 0.72rem;
+letter-spacing: 0.15em;
+}
+.nav-lang button {
+background: none;
+border: 1px solid transparent;
+color: rgba(245,241,232,0.4);
+padding: 0.25rem 0.6rem;
+cursor: pointer;
+font-size: 0.72rem;
+letter-spacing: 0.12em;
+transition: all 0.3s;
+font-family: ‘Cormorant Garamond’, serif;
+}
+.nav-lang button.active {
+border-color: var(–gold);
+color: var(–gold);
+}
+
+/* ── HERO SCROLL SECTION ── */
+#hero-scroll {
+height: 500vh;
+position: relative;
+}
+
+.hero-sticky {
+position: sticky;
+top: 0;
+height: 100vh;
+width: 100%;
+overflow: hidden;
+}
+
+#hero-video {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+object-fit: cover;
+object-position: center;
+}
+
+.hero-vignette {
+position: absolute;
+inset: 0;
+background: radial-gradient(ellipse at center, transparent 40%, rgba(10,10,10,0.7) 100%);
+pointer-events: none;
+}
+
+.grain {
+position: absolute;
+inset: 0;
+opacity: 0.035;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’/%3E%3C/svg%3E”);
+pointer-events: none;
+animation: grain-shift 0.8s steps(1) infinite;
+}
+@keyframes grain-shift {
+0%,100% { transform: translate(0,0); }
+25% { transform: translate(-1%,-1%); }
+50% { transform: translate(1%,0); }
+75% { transform: translate(0,1%); }
+}
+
+/* overlay headlines */
+.hero-overlay {
+position: absolute;
+inset: 0;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+pointer-events: none;
+}
+
+.hero-text {
+position: absolute;
+text-align: center;
+opacity: 0;
+transform: translateY(20px);
+transition: opacity 0.8s ease, transform 0.8s ease;
+padding: 0 2rem;
+}
+.hero-text.visible {
+opacity: 1;
+transform: translateY(0);
+}
+
+.hero-text .label {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+letter-spacing: 0.4em;
+color: var(–gold);
+text-transform: uppercase;
+margin-bottom: 0.8rem;
+display: block;
+}
+.hero-text h1 {
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 300;
+font-size: clamp(3rem, 8vw, 7rem);
+line-height: 0.9;
+letter-spacing: 0.1em;
+color: var(–cream);
+text-transform: uppercase;
+}
+.hero-text h1 em {
+display: block;
+font-style: italic;
+color: var(–gold);
+}
+.hero-text p {
+margin-top: 1.2rem;
+font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+letter-spacing: 0.1em;
+color: rgba(245,241,232,0.6);
+font-weight: 200;
+line-height: 1.8;
+}
+
+/* scroll indicator */
+.scroll-hint {
+position: absolute;
+bottom: 2.5rem;
+left: 50%;
+transform: translateX(-50%);
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 0.5rem;
+opacity: 1;
+transition: opacity 0.5s;
+}
+.scroll-hint span {
+font-size: 0.6rem;
+letter-spacing: 0.3em;
+color: var(–gold);
+font-family: ‘Cormorant Garamond’, serif;
+text-transform: uppercase;
+}
+.scroll-line {
+width: 1px;
+height: 50px;
+background: linear-gradient(to bottom, var(–gold), transparent);
+animation: scroll-pulse 1.8s ease-in-out infinite;
+}
+@keyframes scroll-pulse {
+0%, 100% { opacity: 0.3; transform: scaleY(0.5); transform-origin: top; }
+50% { opacity: 1; transform: scaleY(1); }
+}
+
+/* progress bar */
+.progress-bar {
+position: absolute;
+bottom: 0;
+left: 0;
+height: 2px;
+background: var(–gold);
+width: 0%;
+transition: width 0.1s linear;
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+display: flex;
+align-items: center;
+gap: 1.5rem;
+padding: 0 3rem;
+margin: 4rem 0 2rem;
+}
+.section-divider .line {
+flex: 1;
+height: 1px;
+background: linear-gradient(to right, transparent, var(–gold-dim));
+}
+.section-divider .line.right {
+background: linear-gradient(to left, transparent, var(–gold-dim));
+}
+.section-divider span {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 0.65rem;
+letter-spacing: 0.5em;
+color: var(–gold);
+text-transform: uppercase;
+white-space: nowrap;
+}
+
+/* ── CATEGORIES SECTION ── */
+#categories {
+padding: 6rem 2rem 8rem;
+max-width: 1200px;
+margin: 0 auto;
+}
+
+.categories-header {
+text-align: center;
+margin-bottom: 4rem;
+}
+.categories-header .eyebrow {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 0.65rem;
+letter-spacing: 0.5em;
+color: var(–gold);
+text-transform: uppercase;
+margin-bottom: 1rem;
+display: block;
+}
+.categories-header h2 {
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 300;
+font-size: clamp(2rem, 5vw, 3.5rem);
+letter-spacing: 0.05em;
+color: var(–cream);
+}
+
+.categories-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+.categories-grid { grid-template-columns: 1fr; gap: 1rem; }
+}
+
+.category-card {
+position: relative;
+overflow: hidden;
+border: 1px solid rgba(201,169,97,0.15);
+cursor: pointer;
+aspect-ratio: 3/4;
+display: flex;
+flex-direction: column;
+justify-content: flex-end;
+transition: border-color 0.4s;
+}
+.category-card:hover {
+border-color: rgba(201,169,97,0.5);
+}
+
+.card-bg {
+position: absolute;
+inset: 0;
+transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.category-card:hover .card-bg {
+transform: scale(1.05);
+}
+
+/* Pastry */
+.card-pastry .card-bg {
+background:
+radial-gradient(ellipse at 60% 30%, rgba(201,169,97,0.25) 0%, transparent 60%),
+radial-gradient(ellipse at 30% 80%, rgba(180,120,40,0.2) 0%, transparent 50%),
+linear-gradient(160deg, #1a1208 0%, #0d0d0d 50%, #111008 100%);
+}
+
+/* Hot drinks */
+.card-hot .card-bg {
+background:
+radial-gradient(ellipse at 50% 40%, rgba(201,169,97,0.2) 0%, transparent 55%),
+radial-gradient(ellipse at 20% 70%, rgba(180,100,20,0.15) 0%, transparent 50%),
+linear-gradient(170deg, #120c08 0%, #0d0a07 50%, #100e0a 100%);
+}
+
+/* Cold drinks */
+.card-cold .card-bg {
+background:
+radial-gradient(ellipse at 50% 30%, rgba(150,200,255,0.1) 0%, transparent 55%),
+radial-gradient(ellipse at 70% 70%, rgba(201,169,97,0.15) 0%, transparent 50%),
+linear-gradient(160deg, #080d14 0%, #0a0d10 50%, #080a0d 100%);
+}
+
+/* Card decorative icon */
+.card-icon {
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -70%);
+width: 80px;
+height: 80px;
+opacity: 0.15;
+transition: opacity 0.4s, transform 0.4s;
+}
+.category-card:hover .card-icon {
+opacity: 0.35;
+transform: translate(-50%, -75%) scale(1.1);
+}
+
+/* Corner brackets */
+.card-corner {
+position: absolute;
+width: 20px;
+height: 20px;
+opacity: 0.4;
+transition: opacity 0.4s, width 0.4s, height 0.4s;
+}
+.card-corner.tl { top: 12px; left: 12px; border-top: 1px solid var(–gold); border-left: 1px solid var(–gold); }
+.card-corner.tr { top: 12px; right: 12px; border-top: 1px solid var(–gold); border-right: 1px solid var(–gold); }
+.card-corner.bl { bottom: 12px; left: 12px; border-bottom: 1px solid var(–gold); border-left: 1px solid var(–gold); }
+.card-corner.br { bottom: 12px; right: 12px; border-bottom: 1px solid var(–gold); border-right: 1px solid var(–gold); }
+.category-card:hover .card-corner { opacity: 0.9; width: 28px; height: 28px; }
+
+.card-content {
+position: relative;
+z-index: 2;
+padding: 2rem;
+background: linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.6) 60%, transparent 100%);
+}
+
+.card-number {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 0.6rem;
+letter-spacing: 0.4em;
+color: var(–gold);
+margin-bottom: 0.8rem;
+display: block;
+}
+
+.card-title-en {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: clamp(1.5rem, 3vw, 2.2rem);
+font-weight: 300;
+letter-spacing: 0.1em;
+color: var(–cream);
+text-transform: uppercase;
+line-height: 1;
+margin-bottom: 0.3rem;
+}
+
+.card-title-fa {
+font-family: ‘Vazirmatn’, sans-serif;
+font-size: 0.85rem;
+font-weight: 200;
+color: var(–gold);
+letter-spacing: 0.05em;
+margin-bottom: 0.8rem;
+}
+
+.card-desc {
+font-size: 0.72rem;
+color: rgba(245,241,232,0.45);
+letter-spacing: 0.05em;
+line-height: 1.6;
+font-weight: 200;
+}
+
+.card-arrow {
+display: inline-flex;
+align-items: center;
+gap: 0.5rem;
+margin-top: 1.2rem;
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 0.65rem;
+letter-spacing: 0.35em;
+color: var(–gold);
+text-transform: uppercase;
+opacity: 0;
+transform: translateX(-8px);
+transition: opacity 0.4s, transform 0.4s;
+}
+.category-card:hover .card-arrow {
+opacity: 1;
+transform: translateX(0);
+}
+.card-arrow::after {
+content: ‘→’;
+font-size: 0.9rem;
+}
+
+/* ── FOOTER ── */
+footer {
+border-top: 1px solid var(–gold-dim);
+padding: 3rem 2.5rem;
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 1rem;
+}
+.footer-logo {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.2rem;
+font-weight: 300;
+letter-spacing: 0.5em;
+color: var(–gold);
+text-transform: uppercase;
+}
+footer small {
+font-size: 0.6rem;
+letter-spacing: 0.2em;
+color: rgba(245,241,232,0.25);
+}
+
+/* ── ENTRANCE ANIMATIONS ── */
+.fade-up {
+opacity: 0;
+transform: translateY(40px);
+transition: opacity 0.9s ease, transform 0.9s ease;
+}
+.fade-up.in-view {
+opacity: 1;
+transform: translateY(0);
+}
+.fade-up:nth-child(2) { transition-delay: 0.15s; }
+.fade-up:nth-child(3) { transition-delay: 0.3s; }
+</style>
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+
+<nav id="navbar">
+  <div class="nav-logo">DARBARI</div>
+  <div class="nav-lang">
+    <button class="active">FA</button>
+    <button>EN</button>
+    <button>TR</button>
+  </div>
+</nav>
+
+<!-- HERO SCROLL SECTION -->
+
+<section id="hero-scroll">
+  <div class="hero-sticky">
+    <video
+      id="hero-video"
+      src="/mnt/user-data/uploads/2026-05-13_4_43_47_AM.mp4"
+      muted
+      playsinline
+      preload="auto"
+    ></video>
+
+```
+<div class="hero-vignette"></div>
+<div class="grain"></div>
+
+<!-- Text overlays at different scroll positions -->
+<div class="hero-overlay">
+  <!-- Scene 1: 0–20% -->
+  <div class="hero-text" id="text-1" style="top:50%; transform:translateY(-50%)">
+    <span class="label">مرحله اول — خاستگاه</span>
+    <h1>دانه<em>اصل</em></h1>
+    <p>شروعی در تاریکی مطلق</p>
+  </div>
+
+  <!-- Scene 2: 25–45% -->
+  <div class="hero-text" id="text-2" style="top:50%; transform:translateY(-50%)">
+    <span class="label">ساخته شده با آتش</span>
+    <h1>نوشیدنی‌های<em>گرم</em></h1>
+  </div>
+
+  <!-- Scene 3: 50–70% -->
+  <div class="hero-text" id="text-3" style="top:50%; transform:translateY(-50%)">
+    <span class="label">با صبر سرو شده</span>
+    <h1>امضاهای<em>درباری</em></h1>
+    <p>دم‌آوری که زمان را متوقف می‌کند</p>
+  </div>
+
+  <!-- Scene 4: 80–100% -->
+  <div class="hero-text" id="text-4" style="top:50%; transform:translateY(-50%)">
+    <span class="label">پخته با عشق</span>
+    <h1>نان<em>وایی</em></h1>
+    <p>هفت لایه برای یک لحظه بی‌نظیر</p>
+  </div>
+</div>
+
+<!-- Scroll hint -->
+<div class="scroll-hint" id="scroll-hint">
+  <span>اسکرول</span>
+  <div class="scroll-line"></div>
+</div>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progress-bar"></div>
+```
+
+  </div>
+</section>
+
+<!-- SECTION DIVIDER -->
+
+<div class="section-divider">
+  <div class="line"></div>
+  <span>انتخاب کنید</span>
+  <div class="line right"></div>
+</div>
+
+<!-- CATEGORIES -->
+
+<section id="categories">
+  <div class="categories-header fade-up">
+    <span class="eyebrow">DARBARI COLLECTION</span>
+    <h2>منوی دربار</h2>
+  </div>
+
+  <div class="categories-grid">
+
+```
+<!-- PASTRY -->
+<div class="category-card card-pastry fade-up" onclick="window.location='#'">
+  <div class="card-bg"></div>
+  <div class="card-corner tl"></div>
+  <div class="card-corner tr"></div>
+  <div class="card-corner bl"></div>
+  <div class="card-corner br"></div>
+
+  <!-- SVG icon: croissant/pastry -->
+  <svg class="card-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 75 C20 75 30 40 50 30 C70 20 85 40 80 65 C75 85 55 90 40 85 C25 80 18 70 20 75Z" stroke="#C9A961" stroke-width="1.5" fill="none"/>
+    <path d="M35 70 C40 55 55 45 65 50" stroke="#C9A961" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="M50 30 L48 15 M50 30 L55 16" stroke="#C9A961" stroke-width="1"/>
+    <circle cx="50" cy="12" r="3" stroke="#C9A961" stroke-width="1" fill="none"/>
+  </svg>
+
+  <div class="card-content">
+    <span class="card-number">01 · BAKERY</span>
+    <div class="card-title-en">Pastry</div>
+    <div class="card-title-fa">نانوایی</div>
+    <div class="card-desc">کروسان کره فرانسوی · نان خرما · تارت شکلاتی</div>
+    <div class="card-arrow">مشاهده منو</div>
+  </div>
+</div>
+
+<!-- HOT DRINKS -->
+<div class="category-card card-hot fade-up" onclick="window.location='#'">
+  <div class="card-bg"></div>
+  <div class="card-corner tl"></div>
+  <div class="card-corner tr"></div>
+  <div class="card-corner bl"></div>
+  <div class="card-corner br"></div>
+
+  <!-- SVG icon: coffee cup with steam -->
+  <svg class="card-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="45" width="50" height="35" rx="4" stroke="#C9A961" stroke-width="1.5"/>
+    <path d="M70 52 L78 52 C82 52 84 56 82 60 C80 64 76 65 72 64" stroke="#C9A961" stroke-width="1.5"/>
+    <line x1="20" y1="68" x2="70" y2="68" stroke="#C9A961" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <path d="M35 38 C35 38 33 32 35 26 C37 20 35 16 35 16" stroke="#C9A961" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M45 35 C45 35 43 29 45 23 C47 17 45 13 45 13" stroke="#C9A961" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M55 38 C55 38 53 32 55 26 C57 20 55 16 55 16" stroke="#C9A961" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="15" y1="80" x2="75" y2="80" stroke="#C9A961" stroke-width="1"/>
+  </svg>
+
+  <div class="card-content">
+    <span class="card-number">02 · HOT DRINKS</span>
+    <div class="card-title-en">Hot Drinks</div>
+    <div class="card-title-fa">نوشیدنی گرم</div>
+    <div class="card-desc">اسپرسو دربار · لته رویال · کاپوچینو امپراتور</div>
+    <div class="card-arrow">مشاهده منو</div>
+  </div>
+</div>
+
+<!-- COLD DRINKS -->
+<div class="category-card card-cold fade-up" onclick="window.location='#'">
+  <div class="card-bg"></div>
+  <div class="card-corner tl"></div>
+  <div class="card-corner tr"></div>
+  <div class="card-corner bl"></div>
+  <div class="card-corner br"></div>
+
+  <!-- SVG icon: cold brew glass with ice -->
+  <svg class="card-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M30 25 L35 80 L65 80 L70 25 Z" stroke="#C9A961" stroke-width="1.5"/>
+    <line x1="28" y1="35" x2="72" y2="35" stroke="#C9A961" stroke-width="0.8" stroke-dasharray="2 2"/>
+    <!-- ice cubes -->
+    <rect x="37" y="40" width="10" height="10" rx="2" stroke="#C9A961" stroke-width="0.8"/>
+    <rect x="52" y="43" width="9" height="9" rx="2" stroke="#C9A961" stroke-width="0.8"/>
+    <rect x="40" y="55" width="8" height="8" rx="2" stroke="#C9A961" stroke-width="0.8"/>
+    <!-- straw -->
+    <line x1="60" y1="20" x2="57" y2="80" stroke="#C9A961" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+
+  <div class="card-content">
+    <span class="card-number">03 · COLD DRINKS</span>
+    <div class="card-title-en">Cold Drinks</div>
+    <div class="card-title-fa">نوشیدنی سرد</div>
+    <div class="card-desc">کلد برو نیمه‌شب · نیتروجن دربار · یخ درباری</div>
+    <div class="card-arrow">مشاهده منو</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="footer-logo">DARBARI</div>
+  <small>© MMXXVI — ALL RIGHTS RESERVED</small>
+</footer>
+
+<script>
+  // ── VIDEO SCROLL SCRUB ──
+  const video = document.getElementById('hero-video');
+  const heroSection = document.getElementById('hero-scroll');
+  const progressBar = document.getElementById('progress-bar');
+  const scrollHint = document.getElementById('scroll-hint');
+  const navbar = document.getElementById('navbar');
+
+  // Text overlay elements and their scroll ranges [start%, end%]
+  const texts = [
+    { el: document.getElementById('text-1'), range: [0, 22] },
+    { el: document.getElementById('text-2'), range: [25, 47] },
+    { el: document.getElementById('text-3'), range: [53, 72] },
+    { el: document.getElementById('text-4'), range: [80, 100] },
+  ];
+
+  // Wait for video metadata
+  video.addEventListener('loadedmetadata', () => {
+    console.log('Video duration:', video.duration);
+  });
+
+  // Fallback: try to load
+  video.load();
+
+  function getScrollProgress() {
+    const rect = heroSection.getBoundingClientRect();
+    const scrolled = -rect.top;
+    const total = heroSection.offsetHeight - window.innerHeight;
+    return Math.max(0, Math.min(1, scrolled / total));
+  }
+
+  function onScroll() {
+    const progress = getScrollProgress();
+    const pct = progress * 100;
+
+    // Scrub video
+    if (video.duration && isFinite(video.duration)) {
+      video.currentTime = progress * video.duration;
+    }
+
+    // Progress bar
+    progressBar.style.width = pct + '%';
+
+    // Hide scroll hint after first scroll
+    if (pct > 3) {
+      scrollHint.style.opacity = '0';
+    } else {
+      scrollHint.style.opacity = '1';
+    }
+
+    // Navbar background
+    if (pct > 2 || window.scrollY > window.innerHeight * 0.2) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+
+    // Text overlays
+    texts.forEach(({ el, range }) => {
+      const [start, end] = range;
+      if (pct >= start && pct <= end) {
+        el.classList.add('visible');
+      } else {
+        el.classList.remove('visible');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); // init
+
+  // ── INTERSECTION OBSERVER for fade-up ──
+  const fadeEls = document.querySelectorAll('.fade-up');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('in-view');
+    });
+  }, { threshold: 0.15 });
+  fadeEls.forEach(el => observer.observe(el));
+
+  // ── LANG TOGGLE ──
+  document.querySelectorAll('.nav-lang button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-lang button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
