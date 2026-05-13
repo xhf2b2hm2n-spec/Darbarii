@@ -1,0 +1,336 @@
+```react
+import React, { useState, useEffect, useRef } from 'react';
+
+// --- Data & Translations ---
+const menuData = {
+  fa: {
+    dir: 'rtl',
+    fontTitle: 'font-vazirmatn',
+    title: 'درباری',
+    subtitle: 'شروعی در تاریکی مطلق',
+    scroll: 'برای کشف طعم‌ها اسکرول کنید',
+    selectCategory: 'لطفاً یک دسته‌بندی را انتخاب کنید',
+    tabs: { bakery: 'نان و شیرینی', cold: 'قهوه سرد', hot: 'قهوه گرم' },
+    categories: {
+      bakery: [
+        { name: 'کروسان کلاسیک فرانسوی', price: '۹۵', desc: 'کره‌ای و لایه لایه، پخت روزانه در تنور اختصاصی' },
+        { name: 'کیک شکلات بلژیکی', price: '۱۴۵', desc: 'با مغز شکلات روان ۶۰٪ و بافت مخملی' },
+        { name: 'چیزکیک سن‌سباستین', price: '۱۶۰', desc: 'پخت سوخته کلاسیک با سس شکلات تلخ داغ' }
+      ],
+      cold: [
+        { name: 'کلد برو نیترو', price: '۱۶۰', desc: 'دم‌آوری سرد ۱۸ ساعته با تزریق نیتروژن' },
+        { name: 'آیس لته درباری', price: '۱۳۰', desc: 'اسپرسو دو شات، شیر تازه محلی و کریستال‌های یخ' },
+        { name: 'اسپرسو تونیک', price: '۱۴۰', desc: 'اسپرسو تک‌خاستگاه اتیوپی، آب تونیک و لایم' }
+      ],
+      hot: [
+        { name: 'قهوه طلا (گلدن لته)', price: '۲۵۰', desc: 'اسپرسو تخصصی، شیر زعفرانی، ورق طلای ۲۴ عیار' },
+        { name: 'اسپرسو سینگل / دابل', price: '۷۵ / ۹۰', desc: 'عصاره‌گیری دقیق از دانه‌های ۱۰۰٪ عربیکا' },
+        { name: 'کاپوچینو ایتالیایی', price: '۱۱۵', desc: 'ترکیب متناسب اسپرسو و فوم شیر ابریشمی' }
+      ]
+    }
+  },
+  en: {
+    dir: 'ltr',
+    fontTitle: 'font-playfair',
+    title: 'DARBARI',
+    subtitle: 'A beginning in absolute darkness',
+    scroll: 'SCROLL TO DISCOVER',
+    selectCategory: 'SELECT A CATEGORY TO VIEW',
+    tabs: { bakery: 'Patisserie', cold: 'Cold Coffee', hot: 'Hot Coffee' },
+    categories: {
+      bakery: [
+        { name: 'Classic French Croissant', price: '95', desc: 'Buttery & flaky, baked daily in-house' },
+        { name: 'Belgian Chocolate Cake', price: '145', desc: '60% molten lava core with velvet texture' },
+        { name: 'San Sebastian Cheesecake', price: '160', desc: 'Burnt basque style with hot dark chocolate sauce' }
+      ],
+      cold: [
+        { name: 'Nitro Cold Brew', price: '160', desc: '18-hour cold steeped with nitro infusion' },
+        { name: 'Darbari Iced Latte', price: '130', desc: 'Double shot Arabica, local fresh milk & ice' },
+        { name: 'Espresso Tonic', price: '140', desc: 'Single origin espresso, premium tonic water, lime' }
+      ],
+      hot: [
+        { name: 'Golden Latte', price: '250', desc: 'Specialty espresso, saffron milk, 24k edible gold leaf' },
+        { name: 'Espresso Single / Double', price: '75 / 90', desc: 'Precision extraction of 100% Arabica beans' },
+        { name: 'Italian Cappuccino', price: '115', desc: 'Balanced espresso & silky micro-foam' }
+      ]
+    }
+  },
+  tr: {
+    dir: 'ltr',
+    fontTitle: 'font-playfair',
+    title: 'DARBARİ',
+    subtitle: 'Mutlak karanlıkta bir başlangıç',
+    scroll: 'KEŞFETMEK İÇİN KAYDIRIN',
+    selectCategory: 'GÖRMEK İÇİN KATEGORİ SEÇİN',
+    tabs: { bakery: 'Pastane', cold: 'Soğuk Kahve', hot: 'Sıcak Kahve' },
+    categories: {
+      bakery: [
+        { name: 'Klasik Kruvasan', price: '95', desc: 'Tereyağlı ve kat kat, günlük taze fırınlanmış' },
+        { name: 'Belçika Çikolatalı Kek', price: '145', desc: '%60 akışkan çikolata dolgulu kadife doku' },
+        { name: 'San Sebastian Cheesecake', price: '160', desc: 'Sıcak bitter çikolata soslu yanık cheesecake' }
+      ],
+      cold: [
+        { name: 'Nitro Cold Brew', price: '160', desc: '18 saat soğuk demlenmiş, kremsi nitro doku' },
+        { name: 'Darbari Iced Latte', price: '130', desc: 'Çift shot Arabica, taze süt ve buz' },
+        { name: 'Espresso Tonik', price: '140', desc: 'Tek kökenli espresso, tonik suyu ve misket limonu' }
+      ],
+      hot: [
+        { name: 'Altın Latte', price: '250', desc: 'Özel espresso, safranlı süt, 24 ayar yenilebilir altın' },
+        { name: 'Espresso Single / Double', price: '75 / 90', desc: '%100 Arabica çekirdeklerinden hassas özütleme' },
+        { name: 'İtalyan Cappuccino', price: '115', desc: 'Dengeli espresso ve ipeksi süt köpüğü' }
+      ]
+    }
+  }
+};
+
+const Icons = {
+  bakery: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 mb-3">
+      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" strokeOpacity="0.2" fill="currentColor" fillOpacity="0.05"/>
+      <path d="M7 14C7 14 8.5 15.5 12 15.5C15.5 15.5 17 14 17 14" />
+      <path d="M8 11.5C8 11.5 9.5 13 12 13C14.5 13 16 11.5 16 11.5" />
+      <path d="M9.5 9C9.5 9 10.5 10.5 12 10.5C13.5 10.5 14.5 9 14.5 9" />
+    </svg>
+  ),
+  cold: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 mb-3">
+      <path d="M10 2L14 2" />
+      <path d="M12 2L12 6" />
+      <path d="M6 6H18L16.5 22H7.5L6 6Z" fill="currentColor" fillOpacity="0.05" />
+      <path d="M8 12L10 16" strokeOpacity="0.5"/>
+      <path d="M16 12L14 16" strokeOpacity="0.5"/>
+    </svg>
+  ),
+  hot: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 mb-3">
+      <path d="M6 8H17V15C17 17.2091 15.2091 19 13 19H10C7.79086 19 6 17.2091 6 15V8Z" fill="currentColor" fillOpacity="0.05" />
+      <path d="M17 11H19C20.1046 11 21 10.1046 21 9C21 7.89543 20.1046 7 19 7H17" />
+      <path d="M9 3V4" />
+      <path d="M13 2V4" />
+    </svg>
+  )
+};
+
+export default function App() {
+  // GitHub Pages fix: Persist language in localStorage
+  const [lang, setLang] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darbari_lang') || 'fa';
+    }
+    return 'fa';
+  });
+
+  const [activeTab, setActiveTab] = useState(null);
+  const videoRef = useRef(null);
+  const menuSectionRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const t = menuData[lang];
+
+  // Sync Language changes to DOM and localStorage
+  useEffect(() => {
+    localStorage.setItem('darbari_lang', lang);
+    document.documentElement.dir = menuData[lang].dir;
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  // Cinematic Scroll Video Engine
+  useEffect(() => {
+    let ticking = false;
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPos = window.scrollY;
+          const cinematicHeight = window.innerHeight * 3;
+          const progress = Math.min(scrollPos / cinematicHeight, 1);
+          
+          setScrollProgress(progress);
+
+          if (videoRef.current && videoRef.current.duration) {
+            videoRef.current.currentTime = videoRef.current.duration * progress;
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleTabClick = (tabKey) => {
+    setActiveTab(prev => prev === tabKey ? null : tabKey);
+    setTimeout(() => {
+      if (menuSectionRef.current) {
+        menuSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
+
+  // Helper variables for typography rules (Fixes disconnected Persian letters)
+  const isFa = lang === 'fa';
+  const subtitleSpacing = isFa ? 'tracking-normal' : 'tracking-[0.3em]';
+  const elementSpacing = isFa ? 'tracking-normal' : 'tracking-[0.2em]';
+
+  return (
+    <div dir={t.dir} className="min-h-screen bg-[#050505] text-[#FAF9F6] font-sans selection:bg-[#D4AF37] selection:text-black">
+      
+      {/* Dynamic Styles including robust Vazirmatn Import */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Vazirmatn:wght@200;300;400;600;700&display=swap');
+        
+        .font-vazirmatn { font-family: 'Vazirmatn', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        
+        .glass-panel {
+          background: rgba(20, 20, 20, 0.4);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .glass-panel.active {
+          background: rgba(212, 175, 55, 0.08);
+          border-color: rgba(212, 175, 55, 0.6);
+          box-shadow: 0 0 40px rgba(212, 175, 55, 0.1), inset 0 0 20px rgba(212, 175, 55, 0.05);
+        }
+
+        @keyframes slideUpFade {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-reveal { animation: slideUpFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+      `}} />
+
+      {/* --- 1. Fixed Video Background --- */}
+      <div className="fixed top-0 left-0 w-full h-full z-0 bg-black">
+        <video 
+          ref={videoRef}
+          muted 
+          playsInline 
+          preload="auto"
+          src="video.mp4" 
+          className="w-full h-full object-cover transition-all duration-300 ease-out"
+          style={{
+            transform: `scale(${1 + (scrollProgress * 0.1)})`,
+            opacity: 1 - (scrollProgress * 0.5)
+          }}
+        >
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-coffee-beans-falling-into-a-grinder-40066-large.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#050505]"></div>
+      </div>
+
+      {/* --- 2. Cinematic Scroll Space --- */}
+      <div className="relative z-10 w-full h-[300vh]">
+        <div className="sticky top-0 h-screen flex flex-col justify-center items-center pointer-events-none">
+          
+          <div className="absolute top-10 pointer-events-auto flex justify-center gap-6 font-playfair tracking-widest text-sm z-50">
+            {['tr', 'en', 'fa'].map((l) => (
+              <button 
+                key={l}
+                onClick={() => setLang(l)}
+                className={`pb-1 uppercase transition-all duration-300 border-b-2 ${lang === l ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-white/50 border-transparent hover:text-white'}`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+
+          <div 
+            className="text-center px-4"
+            style={{
+              opacity: Math.max(1 - (scrollProgress * 3), 0),
+              transform: `translateY(${scrollProgress * 200}px)`
+            }}
+          >
+            <h1 className={`text-6xl sm:text-8xl md:text-9xl font-bold text-white mb-6 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] ${t.fontTitle} tracking-tight leading-normal`}>
+              {t.title}
+            </h1>
+            <p className={`text-sm sm:text-lg md:text-xl text-[#D4AF37] font-light uppercase drop-shadow-md ${subtitleSpacing}`}>
+              {t.subtitle}
+            </p>
+          </div>
+
+          <div 
+            className={`absolute bottom-12 text-xs text-[#D4AF37] uppercase flex flex-col items-center gap-2 animate-pulse ${elementSpacing}`}
+            style={{ opacity: Math.max(1 - (scrollProgress * 5), 0) }}
+          >
+            <span>{t.scroll}</span>
+            <span className="text-lg mt-1">↓</span>
+          </div>
+        </div>
+      </div>
+
+      {/* --- 3. Interactive Menu Section --- */}
+      <div 
+        ref={menuSectionRef}
+        className="relative z-20 bg-[#050505]/90 backdrop-blur-2xl shadow-[0_-30px_60px_rgba(0,0,0,0.8)] min-h-screen pt-24 pb-32 px-4 sm:px-8 flex flex-col items-center border-t border-[#D4AF37]/20"
+      >
+        <div className="w-20 h-1 bg-[#D4AF37]/30 rounded-full mb-16"></div>
+
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {['bakery', 'cold', 'hot'].map((tabKey) => {
+            const isActive = activeTab === tabKey;
+            return (
+              <button
+                key={tabKey}
+                onClick={() => handleTabClick(tabKey)}
+                className={`glass-panel group relative overflow-hidden rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-500 ease-out transform ${isActive ? 'active scale-105' : 'hover:-translate-y-2 hover:border-[#D4AF37]/40'} `}
+              >
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-0'}`}></div>
+                
+                <div className={`transition-colors duration-500 ${isActive ? 'text-[#D4AF37]' : 'text-gray-400 group-hover:text-[#F9E27D]'}`}>
+                  {Icons[tabKey]}
+                </div>
+
+                <h3 className={`text-xl font-bold mt-4 transition-colors duration-500 ${isFa ? 'font-vazirmatn' : 'font-playfair'} ${isActive ? 'text-[#F9E27D]' : 'text-white'}`}>
+                  {t.tabs[tabKey]}
+                </h3>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="w-full max-w-5xl relative min-h-[400px]">
+          {activeTab ? (
+            <div key={activeTab} className="animate-reveal w-full bg-[#0a0a0a]/50 p-8 md:p-12 rounded-3xl border border-white/5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10">
+                {t.categories[activeTab].map((item, idx) => (
+                  <div key={idx} className="group relative transition-all duration-300">
+                    <div className="flex justify-between items-baseline mb-2">
+                      <h3 className="text-lg md:text-xl font-bold text-[#FAF9F6] transition-colors group-hover:text-[#D4AF37]">
+                        {item.name}
+                      </h3>
+                      <div className="flex-grow border-b border-dotted border-white/20 mx-4 relative top-[-6px] transition-colors group-hover:border-[#D4AF37]/40"></div>
+                      <span className="text-xl md:text-2xl text-[#F9E27D] font-vazirmatn font-bold whitespace-nowrap">
+                        {item.price}
+                      </span>
+                    </div>
+                    <p className="text-sm md:text-base text-gray-400 font-light leading-relaxed rtl:text-justify pl-4 rtl:pl-0 rtl:pr-4 border-l-2 rtl:border-l-0 rtl:border-r-2 border-transparent group-hover:border-[#D4AF37] transition-all">
+                      {item.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[200px] text-gray-500 opacity-60">
+              <p className={`text-xl font-light uppercase ${elementSpacing} ${isFa ? 'font-vazirmatn' : 'font-playfair'}`}>
+                {t.selectCategory}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+```
