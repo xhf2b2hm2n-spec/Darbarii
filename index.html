@@ -1,0 +1,499 @@
+```react
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darbari Coffee | منوی سلطنتی درباری</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts: Vazirmatn for Persian, Playfair Display for Elegant English/Turkish headers -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Vazirmatn:wght@200;400;700&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --black: #050505;
+            --gold: #D4AF37;
+            --gold-bright: #F9E27D;
+            --gold-dim: rgba(212, 175, 55, 0.3);
+            --cream: #FAF9F6;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(212, 175, 55, 0.15);
+            --transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--black);
+            color: var(--cream);
+            font-family: 'Vazirmatn', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* ── Cinematic Video Background ── */
+        #video-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            filter: brightness(0.7) contrast(1.1);
+        }
+
+        .scroll-space {
+            height: 250vh; /* Controlled scroll length for video scrubbing */
+        }
+
+        /* ── Hero Overlay ── */
+        .hero-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+
+        .lang-switcher {
+            pointer-events: auto;
+            position: absolute;
+            top: 40px; right: 40px;
+            display: flex; gap: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500; font-size: 0.9rem;
+            letter-spacing: 2px;
+            direction: ltr;
+        }
+
+        .lang-switcher span { 
+            color: rgba(255,255,255,0.5); 
+            cursor: pointer; 
+            transition: var(--transition);
+            padding-bottom: 5px;
+            border-bottom: 1px solid transparent;
+        }
+        .lang-switcher span:hover { color: var(--white); }
+        .lang-switcher span.active { 
+            color: var(--gold); 
+            border-bottom: 1px solid var(--gold);
+        }
+
+        .text-content { text-align: center; }
+        .title { 
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3.5rem, 10vw, 7rem); 
+            font-weight: 700; margin: 0; 
+            color: var(--white); 
+            text-shadow: 0 0 50px rgba(0,0,0,0.8);
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .subtitle { 
+            font-size: clamp(1rem, 4vw, 1.6rem); 
+            color: var(--gold); 
+            margin-top: 20px; 
+            font-weight: 200;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .scroll-indicator {
+            position: absolute; bottom: 50px;
+            font-size: 0.8rem; color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: bounce 2.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotate(-90deg); opacity: 0.5; }
+            40% { transform: translateY(-15px) rotate(-90deg); opacity: 1; }
+        }
+
+        /* ── Menu Section ── */
+        .menu-section {
+            position: relative;
+            z-index: 20;
+            background: linear-gradient(to bottom, transparent, var(--black) 10%, var(--black));
+            padding: 100px 5vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .category-container {
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: var(--transition);
+        }
+
+        .category-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .category-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .category-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: var(--gold);
+            margin: 0;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .category-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px; left: 50%;
+            transform: translateX(-50%);
+            width: 60px; height: 1px;
+            background: var(--gold);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+
+        @media (min-width: 900px) {
+            .menu-grid { grid-template-columns: 1fr 1fr; gap: 80px; }
+        }
+
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+        }
+
+        .menu-item:hover {
+            background: rgba(212, 175, 55, 0.05);
+            border-color: var(--gold);
+            transform: translateY(-5px);
+        }
+
+        .item-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .item-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--cream);
+        }
+
+        .item-dots {
+            flex-grow: 1;
+            border-bottom: 1px dotted rgba(212, 175, 55, 0.3);
+            margin: 0 15px;
+            position: relative;
+            top: -5px;
+        }
+
+        .item-price {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--gold-bright);
+            font-weight: 700;
+        }
+
+        .item-desc {
+            font-size: 0.95rem;
+            color: #aaa;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        /* ── Floating Menu Button ── */
+        .cta-container {
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .menu-button {
+            display: inline-block;
+            padding: 20px 60px;
+            font-size: 1.1rem;
+            color: var(--black);
+            background: linear-gradient(45deg, var(--gold), var(--gold-bright));
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 15px 30px rgba(212, 175, 55, 0.2);
+            transition: var(--transition);
+        }
+
+        .menu-button:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.4);
+            color: #000;
+        }
+
+        /* ── Footer ── */
+        footer {
+            padding: 60px 20px;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+            font-size: 0.8rem;
+            color: #555;
+            letter-spacing: 2px;
+        }
+
+        /* RTL Logic Adjustments */
+        [dir="rtl"] .lang-switcher { right: auto; left: 40px; }
+        [dir="rtl"] .item-price { font-family: 'Vazirmatn', sans-serif; }
+    </style>
+</head>
+<body>
+
+    <div id="video-container">
+        <!-- Using a high quality stock video placeholder if local not found -->
+        <video id="bg-video" loop muted playsinline preload="auto">
+            <source src="video.mp4" type="video/mp4">
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-coffee-beans-falling-into-a-grinder-40066-large.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="hero-overlay" id="hero">
+        <div class="lang-switcher">
+            <span id="lang-tr" onclick="setLang('tr')">TR</span>
+            <span id="lang-en" onclick="setLang('en')">EN</span>
+            <span id="lang-fa" class="active" onclick="setLang('fa')">FA</span>
+        </div>
+        <div class="text-content">
+            <h1 class="title" id="main-title">درباری</h1>
+            <p class="subtitle" id="main-subtitle">اصالت در هر دانه</p>
+        </div>
+        <div class="scroll-indicator" id="scroll-text">→ SCROLL</div>
+    </div>
+
+    <div class="scroll-space"></div>
+
+    <div class="menu-section">
+        
+        <!-- Category: Bakery -->
+        <div class="category-container">
+            <div class="category-header">
+                <h2 class="category-title" id="cat-1">نان و شیرینی</h2>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-item">
+                    <div class="item-main">
+                        <span class="item-name" id="p-n1">کروسان کلاسیک</span>
+                        <div class="item-dots"></div>
+                        <span class="item-price" id="p-p1">۹۵</span>
+                    </div>
+                    <div class="item-desc" id="p-d1">کره‌ای و لایه لایه، پخت روزانه در تنور اختصاصی</div>
+                </div>
+                <div class="menu-item">
+                    <div class="item-main">
+                        <span class="item-name" id="p-n2">کیک شکلات بلژیکی</span>
+                        <div class="item-dots"></div>
+                        <span class="item-price" id="p-p2">۱۴۵</span>
+                    </div>
+                    <div class="item-desc" id="p-d2">با مغز شکلات روان ۶۰٪ و بافت مخملی</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category: Cold Brews -->
+        <div class="category-container">
+            <div class="category-header">
+                <h2 class="category-title" id="cat-2">قهوه سرد</h2>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-item">
+                    <div class="item-main">
+                        <span class="item-name" id="c-n1">آیس لته درباری</span>
+                        <div class="item-dots"></div>
+                        <span class="item-price" id="c-p1">۱۳۰</span>
+                    </div>
+                    <div class="item-desc" id="c-d1">اسپرسو دو شات عربیکا، شیر تازه محلی و کریستال‌های یخ</div>
+                </div>
+                <div class="menu-item">
+                    <div class="item-main">
+                        <span class="item-name" id="c-n2">کلد برو نیترو</span>
+                        <div class="item-dots"></div>
+                        <span class="item-price" id="c-p2">۱۶۰</span>
+                    </div>
+                    <div class="item-desc" id="c-d2">دم‌آوری سرد ۱۸ ساعته با تزریق نیتروژن برای بافت کرمی</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category: Hot Coffee -->
+        <div class="category-container">
+            <div class="category-header">
+                <h2 class="category-title" id="cat-3">قهوه گرم</h2>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-item">
+                    <div class="item-main">
+                        <span class="item-name" id="h-n1">اسپرسو سینگل</span>
+                        <div class="item-dots"></div>
+                        <span class="item-price" id="h-p1">۷۵</span>
+                    </div>
+                    <div class="item-desc" id="h-d1">عصاره‌گیری دقیق از دانه‌های تک‌خاستگاه اتیوپی</div>
+                </div>
+                <div class="menu-item">
+                    <div class="item-main">
+                        <span class="item-name" id="h-n2">کاپوچینو ایتالیایی</span>
+                        <div class="item-dots"></div>
+                        <span class="item-price" id="h-p2">۱۱۵</span>
+                    </div>
+                    <div class="item-desc" id="h-d2">ترکیب متناسب اسپرسو و فوم شیر ابریشمی</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-container">
+            <a href="darbari.pdf" target="_blank" class="menu-button" id="menu-btn">دانلود منوی کامل</a>
+        </div>
+
+        <footer>
+            DARBARI COFFEE ROASTERS &copy; 2024 | PREMIER EXPERIENCE
+        </footer>
+    </div>
+
+    <script>
+        // --- Video Scrubbing Logic ---
+        const video = document.getElementById('bg-video');
+        const hero = document.getElementById('hero');
+        
+        // Ensure video is ready
+        video.addEventListener('loadedmetadata', () => {
+            video.pause();
+        });
+
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY;
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const scrollFraction = scrollPos / maxScroll;
+            
+            // Video Scrubbing
+            if (video.duration) {
+                video.currentTime = video.duration * (scrollPos / (window.innerHeight * 2));
+            }
+
+            // Hero Fade Out
+            const opacity = 1 - (scrollPos / 600);
+            hero.style.opacity = Math.max(opacity, 0);
+            hero.style.transform = `translateY(${scrollPos * 0.2}px)`;
+        });
+
+        // --- Intersection Observer for Menu Reveal ---
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.category-container').forEach(cat => {
+            observer.observe(cat);
+        });
+
+        // --- Multi-language Engine ---
+        const translations = {
+            fa: {
+                title: "درباری", subtitle: "اصالت در هر دانه", scroll: "→ اسکرول",
+                cat1: "نان و شیرینی", cat2: "قهوه سرد", cat3: "قهوه گرم",
+                pn1: "کروسان کلاسیک", pp1: "۹۵", pd1: "کره‌ای و لایه لایه، پخت روزانه در تنور اختصاصی",
+                pn2: "کیک شکلات بلژیکی", pp2: "۱۴۵", pd2: "با مغز شکلات روان ۶۰٪ و بافت مخملی",
+                cn1: "آیس لته درباری", cp1: "۱۳۰", cd1: "اسپرسو دو شات عربیکا، شیر تازه محلی و یخ",
+                cn2: "کلد برو نیترو", cp2: "۱۶۰", cd2: "دم‌آوری سرد ۱۸ ساعته با تزریق نیتروژن",
+                hn1: "اسپرسو سینگل", hp1: "۷۵", hd1: "عصاره‌گیری دقیق از دانه‌های تک‌خاستگاه",
+                hn2: "کاپوچینو ایتالیایی", hp2: "۱۱۵", hd2: "ترکیب متناسب اسپرسو و فوم شیر ابریشمی",
+                btn: "دانلود منوی کامل", dir: "rtl", font: "'Vazirmatn', sans-serif"
+            },
+            en: {
+                title: "DARBARI", subtitle: "Royal Heritage in Every Bean", scroll: "→ SCROLL",
+                cat1: "Patisserie", cat2: "Cold Coffee", cat3: "Hot Coffee",
+                pn1: "Classic Croissant", pp1: "95", pd1: "Buttery & flaky, baked daily in-house",
+                pn2: "Belgian Chocolate Cake", pp2: "145", pd2: "60% molten lava core with velvet texture",
+                cn1: "Royal Iced Latte", cp1: "130", cd1: "Double shot Arabica, local fresh milk & ice",
+                cn2: "Nitro Cold Brew", cp2: "160", cd2: "18-hour cold steeped with nitro infusion",
+                hn1: "Single Espresso", hp1: "75", hd1: "Precision extraction of single-origin beans",
+                hn2: "Italian Cappuccino", hp2: "115", hd2: "Balanced espresso & silky micro-foam",
+                btn: "DOWNLOAD FULL MENU", dir: "ltr", font: "'Montserrat', sans-serif"
+            },
+            tr: {
+                title: "DARBARİ", subtitle: "Her Çekirdekte Asalet", scroll: "→ KAYDIR",
+                cat1: "Unlu Mamuller", cat2: "Soğuk Kahveler", cat3: "Sıcak Kahveler",
+                pn1: "Klasik Kruvasan", pp1: "95", pd1: "Tereyağlı ve kat kat, günlük taze fırınlanmış",
+                pn2: "Belçika Çikolatalı Kek", pp2: "145", pd2: "%60 akışkan çikolata dolgulu kadife doku",
+                cn1: "Darbari Iced Latte", cp1: "130", cd1: "Çift shot espresso, taze süt ve buz",
+                cn2: "Nitro Cold Brew", cp2: "160", cd2: "18 saat soğuk demlenmiş, kremsi nitro doku",
+                hn1: "Single Espresso", hp1: "75", hd1: "Tek kökenli çekirdeklerden hassas özütleme",
+                hn2: "İtalyan Cappuccino", hp2: "115", hd2: "Dengeli espresso ve ipeksi süt köpüğü",
+                btn: "TAM MENÜYÜ İNDİR", dir: "ltr", font: "'Montserrat', sans-serif"
+            }
+        };
+
+        function setLang(lang) {
+            const t = translations[lang];
+            document.documentElement.dir = t.dir;
+            document.body.style.fontFamily = t.font;
+            
+            // Text Updates
+            document.getElementById('main-title').innerText = t.title;
+            document.getElementById('main-subtitle').innerText = t.subtitle;
+            document.getElementById('scroll-text').innerText = t.scroll;
+            document.getElementById('cat-1').innerText = t.cat1;
+            document.getElementById('cat-2').innerText = t.cat2;
+            document.getElementById('cat-3').innerText = t.cat3;
+            document.getElementById('p-n1').innerText = t.pn1; document.getElementById('p-p1').innerText = t.pp1; document.getElementById('p-d1').innerText = t.pd1;
+            document.getElementById('p-n2').innerText = t.pn2; document.getElementById('p-p2').innerText = t.pp2; document.getElementById('p-d2').innerText = t.pd2;
+            document.getElementById('c-n1').innerText = t.cn1; document.getElementById('c-p1').innerText = t.cp1; document.getElementById('c-d1').innerText = t.cd1;
+            document.getElementById('c-n2').innerText = t.cn2; document.getElementById('c-p2').innerText = t.cp2; document.getElementById('c-d2').innerText = t.cd2;
+            document.getElementById('h-n1').innerText = t.hn1; document.getElementById('h-p1').innerText = t.hp1; document.getElementById('h-d1').innerText = t.hd1;
+            document.getElementById('h-n2').innerText = t.hn2; document.getElementById('h-p2').innerText = t.hp2; document.getElementById('h-d2').innerText = t.hd2;
+            document.getElementById('menu-btn').innerText = t.btn;
+            
+            // UI State
+            document.querySelectorAll('.lang-switcher span').forEach(el => el.classList.remove('active'));
+            document.getElementById('lang-' + lang).classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
+```
