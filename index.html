@@ -1,336 +1,1103 @@
-```react
-import React, { useState, useEffect, useRef } from 'react';
+```ht
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="منوی کافه نان درباری؛ نوشیدنی‌های گرم، سرد، نان و شیرینی تازه با تجربه‌ای لوکس و اصیل.">
+<title>کافه نان درباری | Nan Darbari</title>
 
-// --- Data & Translations ---
-const menuData = {
+<!-- Fonts: Vazirmatn (FA/AR) + Cormorant/Cinzel (EN/TR) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:         #020409;
+  --bg-mid:     #08101E;
+  --bg-card:    #050811;
+  --ink:        #FDFBF5;
+  --ink-soft:   #D8C9B3;
+  --ink-muted:  #9AA6B8;
+  --gold:       #D4AF37;
+  --gold-light: #F3E5AB;
+  --gold-dim:   #755E1D;
+  --glass-bg:   rgba(6, 11, 22, 0.7);
+  --glass-brd:  rgba(212, 175, 55, 0.2);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+/* حذف scroll-behavior برای اسکرول سفارشی سینمایی */
+html { background: var(--bg); }
+
+/* Typography Engine */
+body { background:var(--bg); color:var(--ink); overflow-x:hidden; position: relative; -webkit-font-smoothing: antialiased; }
+html[lang="fa"] body, html[lang="ar"] body { font-family: 'Vazirmatn', sans-serif; }
+html[lang="en"] body, html[lang="tr"] body { font-family: 'Cormorant Garamond', serif; }
+
+.cinzel-font { font-family: 'Cinzel', serif; }
+html[lang="fa"] .cinzel-font, html[lang="ar"] .cinzel-font { font-family: 'Vazirmatn', sans-serif; font-weight: 700; }
+.eng-title { font-family: 'Cinzel', serif !important; direction: ltr; }
+
+/* Subtle Noise Texture */
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025; pointer-events: none; z-index: 9999; mix-blend-mode: overlay;
+}
+
+/* Custom Cursor (Desktop Only) */
+@media (hover: hover) and (pointer: fine) {
+  body { cursor: none; }
+  .gn-btn, .lb, button, .mi, a, .modal-close { cursor: none !important; }
+  #cur { width:4px;height:4px;background:var(--gold-light);border-radius:50%;position:fixed;pointer-events:none;z-index:100000;box-shadow: 0 0 8px 1px rgba(243, 229, 171, 0.8); }
+  #cur-ring { width:28px;height:28px;border:1px solid rgba(212, 175, 55, 0.5);border-radius:50%;position:fixed;pointer-events:none;z-index:99998;transition:transform .1s ease-out; }
+}
+
+/* Language Switcher */
+#lang-sw { position:fixed; top:2rem; left:2rem; z-index:200; display:flex; gap:.2rem; padding:.3rem; border-radius:999px; background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid var(--glass-brd); transition:opacity .6s; }
+.lb { background:none; border:none; color:rgba(253, 251, 245, 0.5); font-size:.65rem; font-weight:500; letter-spacing:.1em; padding:.4rem .8rem; transition:all .3s; border-radius:999px; cursor: pointer; }
+html[lang="en"] .lb, html[lang="tr"] .lb { font-family: 'Cinzel', serif; font-size:.5rem; letter-spacing:.15em;}
+.lb:hover { color:var(--ink); }
+.lb.active { color:var(--gold-light); background:rgba(212,175,55,.15); border:1px solid rgba(212,175,55,.3); }
+
+/* Cinematic Section */
+#cinematic-wrap { position:relative; height:360vh; z-index:1; }
+#cinematic-sticky { position:sticky; top:0; height:100vh; height:100dvh; width:100%; overflow:hidden; }
+#c { position:absolute; inset:0; width:100%; height:100%; display:block; }
+#vig { position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 10%,rgba(2,4,9,.85) 65%,rgba(2,4,9,1) 100%);z-index:5;pointer-events:none; }
+
+/* Final Logo Styling */
+#s-final { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;pointer-events:none;text-align:center; opacity:0; transform:translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+.final-text { font-size:clamp(2.8rem,7vw,5.5rem);font-weight:700;color:var(--ink);line-height:1.1; margin:0; text-shadow: 0 0 50px rgba(212,175,55,0.5), 0 10px 40px rgba(0,0,0,1); letter-spacing: 0.1em; }
+.final-sub { display:block; font-size:clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 0.8em; color:var(--gold); margin-top: 10px; font-weight: 400; text-indent: 0.8em;}
+
+/* Minimal Start UI */
+#start-ui {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.8rem;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+#start-ui.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(25px);
+  pointer-events: none;
+}
+
+/* Elegant Button */
+@keyframes softPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(212,175,55,0.15); border-color: rgba(212,175,55,0.3); }
+  50% { box-shadow: 0 0 25px rgba(212,175,55,0.4); border-color: rgba(212,175,55,0.6); }
+}
+#skip-menu {
+  background: rgba(212,175,55,.14);
+  color: var(--gold-light);
+  border: 1px solid rgba(212,175,55,.4);
+  border-radius: 999px;
+  padding: .75rem 2rem;
+  font-size: .85rem;
+  letter-spacing: .1em;
+  cursor: pointer;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: all 0.4s ease;
+  animation: softPulse 3s infinite ease-in-out;
+}
+html[lang="en"] #skip-menu, html[lang="tr"] #skip-menu { font-family: 'Cinzel', serif; font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;}
+#skip-menu:hover { background: rgba(212,175,55,.25); border-color: var(--gold); transform: scale(1.05); }
+
+/* Swipe Finger Icon */
+.swipe-icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.8;
+  animation: swipeGesture 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes swipeGesture {
+  0%   { transform: translateY(15px) scale(0.9); opacity: 0; }
+  15%  { transform: translateY(15px) scale(1); opacity: 0.8; }
+  75%  { transform: translateY(-10px) scale(1); opacity: 0.2; }
+  100% { transform: translateY(-10px) scale(0.9); opacity: 0; }
+}
+
+/* Progress Bar */
+#prog-bar { position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold));width:0%;z-index:20; transition: width 0.1s linear; }
+#prog-bar::after { content:''; position:absolute; right:0; top:-2px; width:6px; height:6px; border-radius:50%; background:var(--gold-light); box-shadow:0 0 8px var(--gold); }
+
+/* Navigation */
+#glass-nav { position:fixed;top:2rem;left:50%;transform:translateX(-50%) translateY(-150px);z-index:300;transition:transform .8s cubic-bezier(.19,1,.22,1),opacity .6s;opacity:0; max-width: 95vw; overflow-x: auto; scrollbar-width: none; }
+#glass-nav::-webkit-scrollbar { display: none; }
+#glass-nav.show { transform:translateX(-50%) translateY(0);opacity:1; }
+.gnav-inner { display:flex;align-items:center;padding:.35rem;border-radius:999px;background:var(--glass-bg);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border:1px solid var(--glass-brd);box-shadow:0 15px 40px rgba(0,0,0,.8);position:relative; width: max-content; margin: 0 auto;}
+.gnav-pill { position:absolute;height:calc(100% - .7rem);border-radius:999px;background:linear-gradient(135deg,rgba(212,175,55,.2),transparent);border:1px solid rgba(212,175,55,.25);transition:all .4s cubic-bezier(0.25, 1, 0.5, 1);pointer-events:none;top:.35rem; }
+.gn-btn { position:relative;background:none;border:none;padding:.65rem 1.6rem;border-radius:999px;font-size:.85rem;color:rgba(253, 251, 245, 0.6);transition:color .3s; font-weight: 500; white-space: nowrap; cursor: pointer;}
+html[lang="en"] .gn-btn, html[lang="tr"] .gn-btn { font-family: 'Cinzel', serif; font-size:.6rem; letter-spacing: .2em; text-transform: uppercase;}
+.gn-btn:hover { color:var(--ink); }
+.gn-btn.active { color:var(--gold-light); }
+
+/* Main Content */
+main { background:var(--bg); position:relative; z-index:2; }
+
+/* Brand Story */
+#about-brand { text-align: center; padding: 7rem 2rem 2rem; max-width: 800px; margin: 0 auto; scroll-margin-top: 50px; }
+.about-subtitle { color: var(--gold-dim); font-size: 0.95rem; letter-spacing: 0.2em; margin-bottom: 1.2rem; }
+.about-title { font-size: clamp(1.8rem, 4vw, 2.8rem); color: var(--ink); margin-bottom: 1.8rem; font-weight: 700;}
+.about-desc { font-size: 1.15rem; color: var(--ink-muted); line-height: 2.2; font-weight: 300;}
+
+html[lang="en"] .about-subtitle, html[lang="tr"] .about-subtitle { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.4em;}
+html[lang="en"] .about-title, html[lang="tr"] .about-title { font-family: 'Cinzel', serif; font-weight: 400;}
+
+/* Menu Section */
+.menu-inner { max-width:1200px;margin:0 auto;padding:6rem 2rem 4rem; scroll-margin-top: 120px; }
+.sec-head { text-align:center;margin-bottom:5rem; }
+.sec-title { font-size:clamp(2.2rem,4vw,3.2rem);color:var(--ink);font-weight:700; }
+.sec-orn { width:70px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1.8rem auto 0; box-shadow: 0 0 12px var(--gold); }
+
+html[lang="en"] .sec-title, html[lang="tr"] .sec-title { font-family: 'Cinzel', serif; font-weight: 400; letter-spacing: .08em;}
+
+.mgrid { display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:1.8rem; }
+
+/* Elegant Menu Cards (Updated with Thumbnails & Clickable) */
+.mi { background:var(--bg-card); border-radius:6px; position:relative; overflow:hidden; transition: transform .5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .5s ease; border: 1px solid rgba(212, 175, 55, 0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; }
+.mi-content { padding:2.5rem 2rem; position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; min-height: 290px;}
+.mi::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:0; height:1px; background:var(--gold); transition:width .6s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 3; }
+
+@media (hover: hover) {
+  .mi:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.15) inset; }
+  .mi:hover::after { width:100%; }
+}
+
+.mi-top { display: flex; gap: 1.2rem; align-items: flex-start; margin-bottom: 1.5rem; }
+.mi-thumb { width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(5,8,17,1) 100%); border: 1px solid rgba(212,175,55,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow: hidden; }
+.mi-thumb svg { width: 28px; height: 28px; color: var(--gold-dim); }
+/* اگه خواستید عکس واقعی بذارید، در کلاس mi-thumb از img استفاده کنید با object-fit: cover و width/height: 100% */
+
+.mi-title-box { flex: 1; }
+.mi-num { font-size:.8rem;color:rgba(212,175,55,.5);margin-bottom:.3rem; font-weight:300;}
+.mi-name { font-size:1.35rem;color:var(--ink);margin-bottom:.2rem;font-weight:700; }
+.mi-local { font-size:.95rem;color:var(--ink-soft);opacity:.7; direction: auto;}
+
+.mi-desc { font-size:.95rem;color:var(--ink-muted);line-height:2.1;font-weight:300; margin-bottom:2.5rem; flex-grow: 1; }
+.mi-foot { display:flex;justify-content:space-between;align-items:center; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 1.5rem; }
+.mi-price { font-size:1.15rem;color:var(--gold-light); font-weight:500;}
+.mi-tag { font-size:.75rem;color:rgba(243,229,171,.8);border:1px solid rgba(212,175,55,.25);padding:.25rem .7rem;border-radius:100px; background: rgba(212,175,55,0.05); }
+
+html[lang="en"] .mi-num, html[lang="tr"] .mi-num { font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: .4em;}
+html[lang="en"] .mi-name, html[lang="tr"] .mi-name { font-family: 'Cinzel', serif; font-size: 1.25rem; font-weight: 500; letter-spacing: .05em;}
+html[lang="en"] .mi-local, html[lang="tr"] .mi-local { font-style: italic; font-size: .95rem;}
+html[lang="en"] .mi-desc, html[lang="tr"] .mi-desc { font-size: .95rem;}
+html[lang="en"] .mi-price, html[lang="tr"] .mi-price { font-family: 'Cinzel', serif; font-size: 1.05rem; letter-spacing: .05em;}
+html[lang="en"] .mi-tag, html[lang="tr"] .mi-tag { font-size: .55rem; letter-spacing: .2em; text-transform: uppercase;}
+
+.divider { display:flex;align-items:center;gap:1.5rem;padding:3rem;max-width:1100px;margin:0 auto; }
+.dl { flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.15)); }
+.dl:last-child { background:linear-gradient(90deg,rgba(212,175,55,.15),transparent); }
+.di { color:rgba(212,175,55,.4);font-size:1.1rem; }
+
+/* MODAL SYSTEM (POPUP) */
+.modal-wrap { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; padding: 1.5rem; }
+.modal-wrap.active { opacity: 1; pointer-events: auto; }
+.modal-bg { position: absolute; inset: 0; background: rgba(2, 4, 9, 0.7); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
+.modal-box { position: relative; z-index: 2; background: var(--bg-card); border: 1px solid var(--gold-dim); border-radius: 16px; width: 100%; max-width: 400px; display: flex; flex-direction: column; overflow: hidden; transform: translateY(40px) scale(0.95); transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(212,175,55,0.1) inset; opacity: 0; }
+.modal-wrap.active .modal-box { transform: translateY(0) scale(1); opacity: 1; }
+
+.modal-hero { height: 180px; background: radial-gradient(circle at center, rgba(212,175,55,0.15) 0%, transparent 70%), var(--bg-mid); display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.modal-hero svg { width: 80px; height: 80px; color: var(--gold-light); filter: drop-shadow(0 10px 20px rgba(212,175,55,0.3)); }
+.modal-close { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.3); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: all 0.3s; backdrop-filter: blur(5px); font-size: 1rem; }
+.modal-close:hover { background: var(--gold); color: var(--bg); transform: rotate(90deg); }
+
+.modal-content-wrap { padding: 2rem; text-align: center; }
+.modal-title { font-size: 1.8rem; color: var(--ink); margin-bottom: 0.3rem; font-weight: 700;}
+.modal-local { font-size: 1.05rem; color: var(--gold); margin-bottom: 1.2rem; }
+.modal-desc { font-size: 1rem; color: var(--ink-muted); line-height: 2; margin-bottom: 2rem; font-weight: 300; }
+.modal-price { font-size: 1.4rem; color: var(--gold-light); margin-bottom: 2rem; font-weight: 500;}
+.modal-btn { display: inline-block; width: 100%; padding: 1.1rem; background: linear-gradient(135deg, rgba(212,175,55,0.2), transparent); border: 1px solid rgba(212,175,55,0.5); color: var(--gold-light); border-radius: 99px; font-size: 1.05rem; cursor: pointer; transition: all 0.4s ease; font-weight: 500; font-family: inherit;}
+.modal-btn:hover { background: var(--gold); color: var(--bg); box-shadow: 0 10px 20px rgba(212,175,55,0.3); transform: translateY(-3px); }
+
+/* Premium Footer (Updated Layout) */
+footer { border-top:1px solid rgba(255,255,255,0.03);padding:6rem 2rem 3rem; background: var(--bg-card); display:flex; flex-direction:column; align-items:center; gap: 3rem;}
+.f-logo { text-align: center; }
+.f-logo h2 { font-size:2rem;color:var(--gold);letter-spacing:.2em; font-weight: 700; margin-bottom: 0.6rem;}
+.f-logo p { font-size:.95rem;color:var(--ink-muted); font-weight: 300; letter-spacing: .1em;}
+html[lang="en"] .f-logo h2, html[lang="tr"] .f-logo h2 { font-family: 'Cinzel', serif; letter-spacing:.4em; font-weight: 400;}
+html[lang="en"] .f-logo p, html[lang="tr"] .f-logo p { font-size: .75rem; letter-spacing: .25em; text-transform: uppercase;}
+
+.f-info { display: flex; gap: 4rem; flex-wrap: wrap; justify-content: center; text-align: center;}
+.f-col h3 { color: var(--ink); font-size: 1.05rem; margin-bottom: 1rem; font-weight: 500; opacity: 0.9;}
+.f-col p, .f-col a { color: var(--ink-muted); font-size: 0.95rem; text-decoration: none; display: block; line-height: 1.9; font-weight: 300; transition: color 0.3s;}
+.f-col a:hover { color: var(--gold-light); }
+.f-copy { width: 100%; text-align: center; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 2rem; color: rgba(154, 166, 184, 0.5); font-size: 0.85rem; font-family: sans-serif;}
+
+/* Reveal Animation */
+.rv { opacity:0; transform:translateY(40px); transition:opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.rv.vis { opacity:1; transform:translateY(0); }
+
+/* Print */
+@media print {
+  #cinematic-wrap, #glass-nav, #lang-sw, #start-ui { display: none !important; }
+  body { background: white; color: black; }
+  .mi { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; background: white;}
+  .mi-name, .mi-price { color: black; }
+  .mi-desc, .mi-local { color: #444; }
+}
+
+/* Mobile Polish */
+@media(max-width:850px){ 
+  #cinematic-wrap { height: 320vh; }
+  #lang-sw { top: 1.5rem; left: 1.5rem; padding: .2rem;}
+  .lb { font-size: .6rem; padding: .3rem .6rem;}
+  
+  #glass-nav { top: auto; bottom: 1.5rem; transform:translateX(-50%) translateY(150px); max-width: 90vw;}
+  #glass-nav.show { transform:translateX(-50%) translateY(0); }
+  .gnav-inner { padding: 0.2rem; }
+  .gn-btn { padding: .55rem 1rem; font-size: .8rem; }
+  html[lang="en"] .gn-btn, html[lang="tr"] .gn-btn { font-size:.55rem; }
+  
+  .mgrid{grid-template-columns:1fr; gap: 1.2rem;} 
+  .menu-inner{padding:4rem 1.2rem 6rem; scroll-margin-top: 60px;} 
+  .mi-content{padding: 2.5rem 1.8rem; min-height: auto;}
+  .mi-top { gap: 1rem; }
+  .mi-thumb { width: 48px; height: 48px; border-radius: 10px;}
+  .mi-thumb svg { width: 24px; height: 24px; }
+  
+  .f-info { gap: 2.5rem; flex-direction: column;}
+  .modal-wrap { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Language Switcher -->
+<div id="lang-sw" aria-label="Language Switcher" dir="ltr">
+  <button class="lb active" data-lang="fa" aria-label="Persian">FA</button>
+  <button class="lb" data-lang="en" aria-label="English">EN</button>
+  <button class="lb" data-lang="ar" aria-label="Arabic">AR</button>
+  <button class="lb" data-lang="tr" aria-label="Turkish">TR</button>
+</div>
+
+<!-- Navigation -->
+<nav id="glass-nav" aria-label="Menu categories">
+  <div class="gnav-inner">
+    <div class="gnav-pill" id="gnav-pill"></div>
+    <button class="gn-btn active" data-target="hot" data-i="nav_hot">نوشیدنی گرم</button>
+    <button class="gn-btn" data-target="cold" data-i="nav_cold">نوشیدنی سرد</button>
+    <button class="gn-btn" data-target="bakery" data-i="nav_bakery">نان و شیرینی</button>
+  </div>
+</nav>
+
+<!-- Cinematic Hero -->
+<header id="cinematic-wrap">
+  <div id="cinematic-sticky">
+    <canvas id="c" aria-label="Cinematic Coffee Animation"></canvas>
+    <div id="vig"></div>
+    <div id="prog-bar"></div>
+    
+    <!-- Final Logo -->
+    <div id="s-final">
+      <h2 class="final-text eng-title">NAN DARBARI<br><span class="final-sub">CAFE</span></h2>
+    </div>
+    
+    <!-- Minimal Start UI (Button + Swipe Finger) -->
+    <div id="start-ui">
+      <button id="skip-menu" data-i="skip" aria-label="View Menu">مشاهده منو</button>
+      
+      <!-- Elegant Hand Swipe Icon -->
+      <svg class="swipe-icon" viewBox="0 0 24 24" fill="none" stroke="var(--gold-light)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 11V6a2 2 0 0 0-4 0v11"/>
+        <path d="M10 17H7.3a4 4 0 0 1-3.9-3.4L3 11a2 2 0 0 1 3.2-1.6l3.8 2.6"/>
+        <path d="M14 12.5V11a2 2 0 0 1 4 0v1.5"/>
+        <path d="M18 14v-1.5a2 2 0 0 1 4 0V17a7 7 0 0 1-7 7H9.5"/>
+      </svg>
+    </div>
+
+  </div>
+</header>
+
+<main>
+  <!-- Brand Story -->
+  <section id="about-brand" class="rv">
+    <p class="about-subtitle cinzel-font" data-i="hero_lbl">NAN DARBARI</p>
+    <h2 class="about-title" data-i="about_title">اینجا فقط یک کافه نیست</h2>
+    <p class="about-desc" data-i="about_desc">نان درباری جایی است برای نان تازه، شیرینی گرم، قهوه خوش‌طعم و چند دقیقه آرامش. همه‌چیز طوری چیده شده که ساده نباشد؛ از بوی نان داغ تا فنجان قهوه‌ای که کنار آن می‌نشیند.</p>
+  </section>
+
+  <!-- SVG Templates for Thumbs -->
+  <svg style="display:none;">
+    <defs>
+      <!-- آیکون نوشیدنی گرم -->
+      <g id="icon-hot">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M17 8h1a4 4 0 1 1 0 8h-1"></path>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path>
+        <line x1="6" y1="2" x2="6" y2="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+        <line x1="10" y1="2" x2="10" y2="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+        <line x1="14" y1="2" x2="14" y2="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+      </g>
+      <!-- آیکون نوشیدنی سرد -->
+      <g id="icon-cold">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M6 8h12l-1.5 14H7.5L6 8z"></path>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M8 8V4l4-2 4 2v4"></path>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10 12v6"></path>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M14 12v6"></path>
+      </g>
+      <!-- آیکون نان و شیرینی -->
+      <g id="icon-bakery">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 22a9.97 9.97 0 0 0 7.07-2.93A9.97 9.97 0 0 0 22 12c0-5.52-4.48-10-10-10S2 6.48 2 12a9.97 9.97 0 0 0 2.93 7.07A9.97 9.97 0 0 0 12 22z"></path>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M7 12c0-2.76 2.24-5 5-5s5 2.24 5 5"></path>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9.5 17c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5"></path>
+      </g>
+    </defs>
+  </svg>
+
+  <!-- Menu Structure -->
+  <div id="menu-section">
+    <!-- HOT -->
+    <section class="menu-inner" id="hot">
+      <div class="sec-head rv"><h2 class="sec-title cinzel-font" data-i="hot_title">نوشیدنی گرم</h2><div class="sec-orn"></div></div>
+      <div class="mgrid">
+        <article class="mi rv" data-item-id="h1" data-cat="hot">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-hot"></use></svg></div>
+              <div class="mi-title-box">
+                <div class="mi-num cinzel-font">01</div>
+                <h3 class="mi-name cinzel-font" data-i="h1n">Espresso</h3>
+                <p class="mi-local" data-i="h1l">اسپرسو</p>
+              </div>
+            </div>
+            <p class="mi-desc" data-i="h1d">اسپرسوی غلیظ و خوش‌عطر، مناسب شروع یک روز جدی.</p>
+            <div class="mi-foot">
+              <span class="mi-price cinzel-font" data-i="h1p">۴۵٬۰۰۰ تومان</span>
+              <span class="mi-tag" data-i="cat_hot">گرم</span>
+            </div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="h2" data-cat="hot">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-hot"></use></svg></div>
+              <div class="mi-title-box">
+                <div class="mi-num cinzel-font">02</div>
+                <h3 class="mi-name cinzel-font" data-i="h2n">Americano</h3>
+                <p class="mi-local" data-i="h2l">آمریکانو</p>
+              </div>
+            </div>
+            <p class="mi-desc" data-i="h2d">دابل شات اسپرسو روی آب داغ، ملایم و طولانی.</p>
+            <div class="mi-foot"><span class="mi-price cinzel-font" data-i="h2p">۵۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_hot">گرم</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="h3" data-cat="hot">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-hot"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">03</div><h3 class="mi-name cinzel-font" data-i="h3n">Flat White</h3><p class="mi-local" data-i="h3l">فلت وایت</p></div>
+            </div>
+            <p class="mi-desc" data-i="h3d">دو شات اسپرسو، میکروفوم ابریشمی — کرمی و قوی.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="h3p">۶۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_hot">گرم</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="h4" data-cat="hot">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-hot"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">04</div><h3 class="mi-name cinzel-font" data-i="h4n">Latte</h3><p class="mi-local" data-i="h4l">لاته</p></div>
+            </div>
+            <p class="mi-desc" data-i="h4d">اسپرسو ملایم با شیر بخارپز و فوم نرم.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="h4p">۶۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_hot">گرم</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="h5" data-cat="hot">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-hot"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">05</div><h3 class="mi-name cinzel-font" data-i="h5n">Persian Coffee</h3><p class="mi-local" data-i="h5l">قهوه اصیل ایرانی</p></div>
+            </div>
+            <p class="mi-desc" data-i="h5d">قهوه‌ای گرم و خوش‌عطر با رایحه هل؛ ساده، متفاوت و دلنشین.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="h5p">۵۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="tSig">امضا</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="h6" data-cat="hot">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-hot"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">06</div><h3 class="mi-name cinzel-font" data-i="h6n">Cardamom Latte</h3><p class="mi-local" data-i="h6l">لاته هل</p></div>
+            </div>
+            <p class="mi-desc" data-i="h6d">لاته‌ای نرم با رایحه هل؛ انتخابی خاص برای سلیقه‌های متفاوت.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="h6p">۶۸٬۰۰۰ تومان</span><span class="mi-tag" data-i="tSig">امضا</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+    
+    <div class="divider"><div class="dl"></div><div class="di">✦</div><div class="dl"></div></div>
+    
+    <!-- COLD -->
+    <section class="menu-inner" id="cold">
+      <div class="sec-head rv"><h2 class="sec-title cinzel-font" data-i="cold_title">نوشیدنی سرد</h2><div class="sec-orn"></div></div>
+      <div class="mgrid">
+        <article class="mi rv" data-item-id="c1" data-cat="cold">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-cold"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">01</div><h3 class="mi-name cinzel-font" data-i="c1n">Cold Brew</h3><p class="mi-local" data-i="c1l">کولد برو</p></div>
+            </div>
+            <p class="mi-desc" data-i="c1d">دم‌آوری ۲۴ ساعته در آب سرد — طعمی صاف بدون تلخی.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="c1p">۶۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_cold">سرد</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="c2" data-cat="cold">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-cold"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">02</div><h3 class="mi-name cinzel-font" data-i="c2n">Iced Latte</h3><p class="mi-local" data-i="c2l">آیس لاته</p></div>
+            </div>
+            <p class="mi-desc" data-i="c2d">اسپرسو تازه روی یخ، شیر کامل — ساده و بی‌نقص.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="c2p">۶۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_cold">سرد</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="c3" data-cat="cold">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-cold"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">03</div><h3 class="mi-name cinzel-font" data-i="c3n">Affogato</h3><p class="mi-local" data-i="c3l">افوگاتو</p></div>
+            </div>
+            <p class="mi-desc" data-i="c3d">اسپرسو داغ روی بستنی وانیل — جایی که گرم و سرد هم می‌شوند.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="c3p">۸۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="tDes">دسر</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="c4" data-cat="cold">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-cold"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">04</div><h3 class="mi-name cinzel-font" data-i="c4n">Rose Cold Foam</h3><p class="mi-local" data-i="c4l">کولد فوم گل محمدی</p></div>
+            </div>
+            <p class="mi-desc" data-i="c4d">کولد برو با فوم ابریشمی گلاب — ظریف و عطرآگین.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="c4p">۸۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="tSig">امضا</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="c5" data-cat="cold">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-cold"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">05</div><h3 class="mi-name cinzel-font" data-i="c5n">Iced Americano</h3><p class="mi-local" data-i="c5l">آیس آمریکانو</p></div>
+            </div>
+            <p class="mi-desc" data-i="c5d">اسپرسو و آب سرد روی یخ، خنک و نیروبخش.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="c5p">۵۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_cold">سرد</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="c6" data-cat="cold">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-cold"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">06</div><h3 class="mi-name cinzel-font" data-i="c6n">Sparkling Espresso</h3><p class="mi-local" data-i="c6l">اسپرسو گازدار</p></div>
+            </div>
+            <p class="mi-desc" data-i="c6d">اسپرسو روی آب گازدار با پوست لیمو — جسور و هیجان‌انگیز.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="c6p">۷۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="tUniq">خاص</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+    
+    <div class="divider"><div class="dl"></div><div class="di">✦</div><div class="dl"></div></div>
+    
+    <!-- BAKERY -->
+    <section class="menu-inner" id="bakery">
+      <div class="sec-head rv"><h2 class="sec-title cinzel-font" data-i="bak_title">نان و شیرینی</h2><div class="sec-orn"></div></div>
+      <div class="mgrid">
+        <article class="mi rv" data-item-id="b1" data-cat="bakery">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-bakery"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">01</div><h3 class="mi-name cinzel-font" data-i="b1n">Saffron Croissant</h3><p class="mi-local" data-i="b1l">کروسان زعفران</p></div>
+            </div>
+            <p class="mi-desc" data-i="b1d">کروسان کره‌ای ورقه‌ورقه با فیلینگ کرم زعفرانی اصیل.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="b1p">۵۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="tFresh">تازه</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="b2" data-cat="bakery">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-bakery"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">02</div><h3 class="mi-name cinzel-font" data-i="b2n">Persian Breakfast</h3><p class="mi-local" data-i="b2l">صبحانه درباری (بربری)</p></div>
+            </div>
+            <p class="mi-desc" data-i="b2d">نان بربری تازه با کره محلی، گردو و عسل طبیعی کوهستان.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="b2p">۸۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="tTrad">سنتی</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="b3" data-cat="bakery">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-bakery"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">03</div><h3 class="mi-name cinzel-font" data-i="b3n">Almond Tart</h3><p class="mi-local" data-i="b3l">تارت بادام</p></div>
+            </div>
+            <p class="mi-desc" data-i="b3d">پوسته کره‌ای ترد با فرانژیپان بادام و مربای زردآلو.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="b3p">۷۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_bak">شیرینی</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="b4" data-cat="bakery">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-bakery"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">04</div><h3 class="mi-name cinzel-font" data-i="b4n">Belgian Brownie</h3><p class="mi-local" data-i="b4l">براونی شکلات تلخ</p></div>
+            </div>
+            <p class="mi-desc" data-i="b4d">براونی نرم با شکلات تلخ بلژیکی و بافتی مرطوب و غلیظ.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="b4p">۶۰٬۰۰۰ تومان</span><span class="mi-tag" data-i="cat_bak">شیرینی</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="b5" data-cat="bakery">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-bakery"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">05</div><h3 class="mi-name cinzel-font" data-i="b5n">Pistachio Roll</h3><p class="mi-local" data-i="b5l">رول پسته</p></div>
+            </div>
+            <p class="mi-desc" data-i="b5d">خمیر دانمارکی پیچیده با کرم پسته ایرانی و رایحه گلاب.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="b5p">۶۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="tSig">امضا</span></div>
+          </div>
+        </article>
+        <article class="mi rv" data-item-id="b6" data-cat="bakery">
+          <div class="mi-content">
+            <div class="mi-top">
+              <div class="mi-thumb"><svg viewBox="0 0 24 24"><use href="#icon-bakery"></use></svg></div>
+              <div class="mi-title-box"><div class="mi-num cinzel-font">06</div><h3 class="mi-name cinzel-font" data-i="b6n">Cinnamon Roll</h3><p class="mi-local" data-i="b6l">رول دارچین</p></div>
+            </div>
+            <p class="mi-desc" data-i="b6d">رول دارچینی نرم و گرم با آیسینگ پنیر خامه‌ای.</p><div class="mi-foot"><span class="mi-price cinzel-font" data-i="b6p">۵۵٬۰۰۰ تومان</span><span class="mi-tag" data-i="tFresh">تازه</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Item Modal (Popup) -->
+<div id="item-modal" class="modal-wrap">
+  <div class="modal-bg" onclick="closeModal()"></div>
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero">
+      <svg id="modal-icon" viewBox="0 0 24 24"><use href="#icon-hot"></use></svg>
+    </div>
+    <div class="modal-content-wrap">
+      <h2 id="modal-title" class="modal-title cinzel-font"></h2>
+      <h3 id="modal-local" class="modal-local"></h3>
+      <p id="modal-desc" class="modal-desc"></p>
+      <div id="modal-price" class="modal-price cinzel-font"></div>
+      <button class="modal-btn" data-i="order_btn" onclick="closeModal()">سفارش در کافه</button>
+    </div>
+  </div>
+</div>
+
+<!-- Premium Footer (Reordered) -->
+<footer>
+  <div class="f-logo">
+    <h2 class="cinzel-font">NAN DARBARI</h2>
+    <p data-i="footer_sub">Bakery & Coffee House</p>
+  </div>
+  
+  <div class="f-info">
+    <!-- بخش اول: تماس -->
+    <div class="f-col">
+      <h3 data-i="f_con">ارتباط با ما</h3>
+      <a href="tel:+9821000000" dir="ltr">۰۲۱-۰۰۰۰۰۰۰</a>
+      <a href="tel:+98912000000" dir="ltr">۰۹۱۲-۰۰۰۰۰۰۰</a>
+    </div>
+    
+    <!-- بخش دوم: اینستاگرام -->
+    <div class="f-col">
+      <h3 data-i="f_insta">اینستاگرام</h3>
+      <a href="https://www.instagram.com/darbary_bread.coffee?igsh=MXVmYWtoYnhxM3VtaA==" target="_blank" dir="ltr">@darbary_bread.coffee</a>
+    </div>
+
+    <!-- بخش سوم: آدرس -->
+    <div class="f-col">
+      <h3 data-i="f_loc">آدرس کافه</h3>
+      <p data-i="footer_addr">تهران، خیابان فرشته، پلاک ۱۲</p>
+    </div>
+
+    <!-- بخش چهارم: ساعات کاری -->
+    <div class="f-col">
+      <h3 data-i="f_hrs">ساعات کاری</h3>
+      <p data-i="footer_hrs">هر روز ۰۸:۰۰ — ۲۳:۰۰</p>
+    </div>
+  </div>
+
+  <div class="f-copy">&copy; 2024 Nan Darbari. All rights reserved.</div>
+</footer>
+
+<script>
+// --- ترجمه‌ها ---
+const T = {
   fa: {
-    dir: 'rtl',
-    fontTitle: 'font-vazirmatn',
-    title: 'درباری',
-    subtitle: 'شروعی در تاریکی مطلق',
-    scroll: 'برای کشف طعم‌ها اسکرول کنید',
-    selectCategory: 'لطفاً یک دسته‌بندی را انتخاب کنید',
-    tabs: { bakery: 'نان و شیرینی', cold: 'قهوه سرد', hot: 'قهوه گرم' },
-    categories: {
-      bakery: [
-        { name: 'کروسان کلاسیک فرانسوی', price: '۹۵', desc: 'کره‌ای و لایه لایه، پخت روزانه در تنور اختصاصی' },
-        { name: 'کیک شکلات بلژیکی', price: '۱۴۵', desc: 'با مغز شکلات روان ۶۰٪ و بافت مخملی' },
-        { name: 'چیزکیک سن‌سباستین', price: '۱۶۰', desc: 'پخت سوخته کلاسیک با سس شکلات تلخ داغ' }
-      ],
-      cold: [
-        { name: 'کلد برو نیترو', price: '۱۶۰', desc: 'دم‌آوری سرد ۱۸ ساعته با تزریق نیتروژن' },
-        { name: 'آیس لته درباری', price: '۱۳۰', desc: 'اسپرسو دو شات، شیر تازه محلی و کریستال‌های یخ' },
-        { name: 'اسپرسو تونیک', price: '۱۴۰', desc: 'اسپرسو تک‌خاستگاه اتیوپی، آب تونیک و لایم' }
-      ],
-      hot: [
-        { name: 'قهوه طلا (گلدن لته)', price: '۲۵۰', desc: 'اسپرسو تخصصی، شیر زعفرانی، ورق طلای ۲۴ عیار' },
-        { name: 'اسپرسو سینگل / دابل', price: '۷۵ / ۹۰', desc: 'عصاره‌گیری دقیق از دانه‌های ۱۰۰٪ عربیکا' },
-        { name: 'کاپوچینو ایتالیایی', price: '۱۱۵', desc: 'ترکیب متناسب اسپرسو و فوم شیر ابریشمی' }
-      ]
-    }
+    hero_lbl:'NAN DARBARI', skip:'مشاهده منو',
+    nav_hot:'نوشیدنی گرم', nav_cold:'نوشیدنی سرد', nav_bakery:'نان و شیرینی',
+    about_title:'اینجا فقط یک کافه نیست', about_desc:'نان درباری جایی است برای نان تازه، شیرینی گرم، قهوه خوش‌طعم و چند دقیقه آرامش. همه‌چیز طوری چیده شده که ساده نباشد؛ از بوی نان داغ تا فنجان قهوه‌ای که کنار آن می‌نشیند.',
+    cat_hot:'گرم', cat_cold:'سرد', cat_bak:'نان و شیرینی', hot_title:'نوشیدنی گرم', cold_title:'نوشیدنی سرد', bak_title:'نان و شیرینی',
+    footer_sub:'Bakery & Coffee House', f_loc:'آدرس کافه', f_hrs:'ساعات کاری', f_con:'ارتباط با ما', f_insta:'اینستاگرام', order_btn:'بستن و بازگشت',
+    footer_addr:'تهران، خیابان فرشته، پلاک ۱۲', footer_hrs:'هر روز ۰۸:۰۰ — ۲۳:۰۰',
+    h1n:'Espresso', h1l:'اسپرسو', h1d:'اسپرسوی غلیظ و خوش‌عطر، مناسب شروع یک روز جدی.', h1p:'۴۵٬۰۰۰ تومان',
+    h2n:'Americano', h2l:'آمریکانو', h2d:'دابل شات اسپرسو روی آب داغ، ملایم و طولانی.', h2p:'۵۰٬۰۰۰ تومان',
+    h3n:'Flat White', h3l:'فلت وایت', h3d:'دو شات اسپرسو، میکروفوم ابریشمی — کرمی و قوی.', h3p:'۶۵٬۰۰۰ تومان',
+    h4n:'Latte', h4l:'لاته', h4d:'اسپرسو ملایم با شیر بخارپز و فوم نرم.', h4p:'۶۰٬۰۰۰ تومان',
+    h5n:'Persian Coffee', h5l:'قهوه اصیل ایرانی', h5d:'قهوه‌ای گرم و خوش‌عطر با رایحه هل؛ ساده، متفاوت و دلنشین.', h5p:'۵۵٬۰۰۰ تومان',
+    h6n:'Cardamom Latte', h6l:'لاته هل', h6d:'لاته‌ای نرم با رایحه هل؛ انتخابی خاص برای سلیقه‌های متفاوت.', h6p:'۶۸٬۰۰۰ تومان',
+    c1n:'Cold Brew', c1l:'کولد برو', c1d:'دم‌آوری ۲۴ ساعته در آب سرد — طعمی صاف بدون تلخی.', c1p:'۶۵٬۰۰۰ تومان',
+    c2n:'Iced Latte', c2l:'آیس لاته', c2d:'اسپرسو تازه روی یخ، شیر کامل — ساده و بی‌نقص.', c2p:'۶۰٬۰۰۰ تومان',
+    c3n:'Affogato', c3l:'افوگاتو', c3d:'اسپرسو داغ روی بستنی وانیل — جایی که گرم و سرد هم می‌شوند.', c3p:'۸۰٬۰۰۰ تومان',
+    c4n:'Rose Cold Foam', c4l:'کولد فوم گل محمدی', c4d:'کولد برو با فوم ابریشمی گلاب — ظریف و عطرآگین.', c4p:'۸۵٬۰۰۰ تومان',
+    c5n:'Iced Americano', c5l:'آیس آمریکانو', c5d:'اسپرسو و آب سرد روی یخ، خنک و نیروبخش.', c5p:'۵۵٬۰۰۰ تومان',
+    c6n:'Sparkling Espresso', c6l:'اسپرسو گازدار', c6d:'اسپرسو روی آب گازدار با پوست لیمو — جسور و هیجان‌انگیز.', c6p:'۷۰٬۰۰۰ تومان',
+    b1n:'Saffron Croissant', b1l:'کروسان زعفران', b1d:'کروسان کره‌ای ورقه‌ورقه با فیلینگ کرم زعفرانی اصیل.', b1p:'۵۵٬۰۰۰ تومان',
+    b2n:'Persian Breakfast', b2l:'صبحانه درباری (بربری)', b2d:'نان بربری تازه با کره محلی، گردو و عسل طبیعی کوهستان.', b2p:'۸۵٬۰۰۰ تومان',
+    b3n:'Almond Tart', b3l:'تارت بادام', b3d:'پوسته کره‌ای ترد با فرانژیپان بادام و مربای زردآلو.', b3p:'۷۰٬۰۰۰ تومان',
+    b4n:'Belgian Brownie', b4l:'براونی شکلات تلخ', b4d:'براونی نرم با شکلات تلخ بلژیکی و بافتی مرطوب و غلیظ.', b4p:'۶۰٬۰۰۰ تومان',
+    b5n:'Pistachio Roll', b5l:'رول پسته', b5d:'خمیر دانمارکی پیچیده با کرم پسته ایرانی و رایحه گلاب.', b5p:'۶۵٬۰۰۰ تومان',
+    b6n:'Cinnamon Roll', b6l:'رول دارچین', b6d:'رول دارچینی نرم و گرم با آیسینگ پنیر خامه‌ای.', b6p:'۵۵٬۰۰۰ تومان',
+    tSig:'امضا', tDes:'دسر', tUniq:'خاص', tFresh:'تازه', tTrad:'سنتی'
+  },
+  ar: {
+    hero_lbl:'NAN DARBARI', skip:'عرض القائمة',
+    nav_hot:'مشروبات ساخنة', nav_cold:'مشروبات باردة', nav_bakery:'مخبوزات وحلويات',
+    about_title:'ليس مجرد مقهى', about_desc:'نان درباري هو مكان للخبز الطازج، والحلويات الدافئة، والقهوة اللذيذة، ودقائق من الهدوء. كل شيء مرتب ليكون استثنائياً؛ من رائحة الخبز الساخن إلى فنجان القهوة بجانبه.',
+    cat_hot:'ساخن', cat_cold:'بارد', cat_bak:'مخبوزات', hot_title:'مشروبات ساخنة', cold_title:'مشروبات باردة', bak_title:'مخبوزات وحلويات',
+    footer_sub:'Bakery & Coffee House', f_loc:'الموقع', f_hrs:'ساعات العمل', f_con:'تواصل معنا', f_insta:'إنستغرام', order_btn:'إغلاق وعودة',
+    footer_addr:'طهران، شارع فرشته، رقم 12', footer_hrs:'يومياً 08:00 — 23:00',
+    h1n:'Espresso', h1l:'إسبريسو', h1d:'إسبريسو غني وعطري، مناسب لبداية يوم جاد.', h1p:'45,000 تومان',
+    h2n:'Americano', h2l:'أمريكانو', h2d:'دبل شوت إسبريسو مع ماء ساخن، خفيف وطويل.', h2p:'50,000 تومان',
+    h3n:'Flat White', h3l:'فلات وايت', h3d:'دبل شوت إسبريسو، رغوة حريرية — كريمي وقوي.', h3p:'65,000 تومان',
+    h4n:'Latte', h4l:'لاتيه', h4d:'إسبريسو خفيف مع حليب مبخر ورغوة ناعمة.', h4p:'60,000 تومان',
+    h5n:'Persian Coffee', h5l:'قهوة إيرانية أصيلة', h5d:'قهوة دافئة وعطرة برائحة الهيل؛ بسيطة وممتعة.', h5p:'55,000 تومان',
+    h6n:'Cardamom Latte', h6l:'لاتيه بالهيل', h6d:'لاتيه ناعم برائحة الهيل؛ خيار خاص لأصحاب الذوق المختلف.', h6p:'68,000 تومان',
+    c1n:'Cold Brew', c1l:'كولد برو', c1d:'تخمير لمدة 24 ساعة في ماء بارد — طعم نقي بلا مرارة.', c1p:'65,000 تومان',
+    c2n:'Iced Latte', c2l:'آيس لاتيه', c2d:'إسبريسو طازج على الثلج، حليب كامل الدسم — مثالي.', c2p:'60,000 تومان',
+    c3n:'Affogato', c3l:'أفوغاتو', c3d:'إسبريسو ساخن على آيس كريم الفانيليا.', c3p:'80,000 تومان',
+    c4n:'Rose Cold Foam', c4l:'كولد فوم بالورد', c4d:'كولد برو مع رغوة ماء الورد الحريرية.', c4p:'85,000 تومان',
+    c5n:'Iced Americano', c5l:'آيس أمريكانو', c5d:'إسبريسو وماء بارد على الثلج، منعش.', c5p:'55,000 تومان',
+    c6n:'Sparkling Espresso', c6l:'إسبريسو فوار', c6d:'إسبريسو مع مياه غازية وقشر الليمون — جريء.', c6p:'70,000 تومان',
+    b1n:'Saffron Croissant', b1l:'كرواسون بالزعفران', b1d:'كرواسون بالزبدة مع حشوة كريمة الزعفران الأصيلة.', b1p:'55,000 تومان',
+    b2n:'Persian Breakfast', b2l:'فطور درباري (بربري)', b2d:'خبز بربري طازج مع زبدة محلية، جوز وعسل جبلي.', b2p:'85,000 تومان',
+    b3n:'Almond Tart', b3l:'تارت اللوز', b3d:'عجينة الزبدة الهشة مع كريمة اللوز ومربى المشمش.', b3p:'70,000 تومان',
+    b4n:'Belgian Brownie', b4l:'براوني بلجيكي', b4d:'براوني طري مع شوكولاتة بلجيكية داكنة.', b4p:'60,000 تومان',
+    b5n:'Pistachio Roll', b5l:'رول الفستق', b5d:'عجينة الدنماركي مع كريمة الفستق الإيراني وماء الورد.', b5p:'65,000 تومان',
+    b6n:'Cinnamon Roll', b6l:'رول القرفة', b6d:'رول القرفة الدافئ والناعم مع كريمة الجبن.', b6p:'55,000 تومان',
+    tSig:'مميز', tDes:'حلى', tUniq:'فريد', tFresh:'طازج', tTrad:'تقليدي'
   },
   en: {
-    dir: 'ltr',
-    fontTitle: 'font-playfair',
-    title: 'DARBARI',
-    subtitle: 'A beginning in absolute darkness',
-    scroll: 'SCROLL TO DISCOVER',
-    selectCategory: 'SELECT A CATEGORY TO VIEW',
-    tabs: { bakery: 'Patisserie', cold: 'Cold Coffee', hot: 'Hot Coffee' },
-    categories: {
-      bakery: [
-        { name: 'Classic French Croissant', price: '95', desc: 'Buttery & flaky, baked daily in-house' },
-        { name: 'Belgian Chocolate Cake', price: '145', desc: '60% molten lava core with velvet texture' },
-        { name: 'San Sebastian Cheesecake', price: '160', desc: 'Burnt basque style with hot dark chocolate sauce' }
-      ],
-      cold: [
-        { name: 'Nitro Cold Brew', price: '160', desc: '18-hour cold steeped with nitro infusion' },
-        { name: 'Darbari Iced Latte', price: '130', desc: 'Double shot Arabica, local fresh milk & ice' },
-        { name: 'Espresso Tonic', price: '140', desc: 'Single origin espresso, premium tonic water, lime' }
-      ],
-      hot: [
-        { name: 'Golden Latte', price: '250', desc: 'Specialty espresso, saffron milk, 24k edible gold leaf' },
-        { name: 'Espresso Single / Double', price: '75 / 90', desc: 'Precision extraction of 100% Arabica beans' },
-        { name: 'Italian Cappuccino', price: '115', desc: 'Balanced espresso & silky micro-foam' }
-      ]
-    }
+    hero_lbl:'NAN DARBARI', skip:'View Menu',
+    nav_hot:'Hot Drinks', nav_cold:'Cold Drinks', nav_bakery:'Bakery & Pastry',
+    about_title:'More Than Just a Cafe', about_desc:'Nan Darbari is a place for fresh bread, warm pastries, flavorful coffee, and a few minutes of peace. Everything is arranged to be extraordinary; from the scent of hot bread to the cup of coffee sitting beside it.',
+    cat_hot:'Hot', cat_cold:'Cold', cat_bak:'Bakery', hot_title:'Hot Drinks', cold_title:'Cold Drinks', bak_title:'Bakery & Pastry',
+    footer_sub:'Bakery & Coffee House', f_loc:'Location', f_hrs:'Hours', f_con:'Contact Us', f_insta:'Instagram', order_btn:'Close & Return',
+    footer_addr:'12 Fereshteh St, Tehran', footer_hrs:'Everyday 08:00 — 23:00',
+    h1n:'Espresso', h1l:'Espresso', h1d:'Rich and aromatic espresso, perfect for a serious start.', h1p:'45,000 Toman',
+    h2n:'Americano', h2l:'Americano', h2d:'Double espresso over hot water, smooth and prolonged.', h2p:'50,000 Toman',
+    h3n:'Flat White', h3l:'Flat White', h3d:'Double shot, silky microfoam — creamy and strong.', h3p:'65,000 Toman',
+    h4n:'Latte', h4l:'Latte', h4d:'Smooth espresso with steamed milk and soft foam.', h4p:'60,000 Toman',
+    h5n:'Persian Coffee', h5l:'Persian Coffee', h5d:'Warm and aromatic coffee with cardamom; simple and delightful.', h5p:'55,000 Toman',
+    h6n:'Cardamom Latte', h6l:'Cardamom Latte', h6d:'Soft latte with cardamom scent; a special choice.', h6p:'68,000 Toman',
+    c1n:'Cold Brew', c1l:'Cold Brew', c1d:'24-hour cold steep — smooth and clean with no bitterness.', c1p:'65,000 Toman',
+    c2n:'Iced Latte', c2l:'Iced Latte', c2d:'Fresh espresso over ice, whole milk — simple and perfect.', c2p:'60,000 Toman',
+    c3n:'Affogato', c3l:'Affogato', c3d:'Hot espresso over vanilla ice cream — where hot meets cold.', c3p:'80,000 Toman',
+    c4n:'Rose Cold Foam', c4l:'Rose Cold Foam', c4d:'Cold brew with silky rose water cold foam — delicate and fragrant.', c4p:'85,000 Toman',
+    c5n:'Iced Americano', c5l:'Iced Americano', c5d:'Espresso and cold water over ice, crisp and energizing.', c5p:'55,000 Toman',
+    c6n:'Sparkling Espresso', c6l:'Sparkling Espresso', c6d:'Espresso over sparkling water with lemon zest — bold and exciting.', c6p:'70,000 Toman',
+    b1n:'Saffron Croissant', b1l:'Saffron Croissant', b1d:'Flaky buttery croissant filled with authentic saffron cream.', b1p:'55,000 Toman',
+    b2n:'Persian Breakfast', b2l:'Barbari Breakfast', b2d:'Fresh Barbari bread with local butter, walnuts, and mountain honey.', b2p:'85,000 Toman',
+    b3n:'Almond Tart', b3l:'Almond Tart', b3d:'Buttery pastry shell with almond frangipane and apricot jam.', b3p:'70,000 Toman',
+    b4n:'Belgian Brownie', b4l:'Dark Choc Brownie', b4d:'Soft brownie with Belgian dark chocolate, moist and rich.', b4p:'60,000 Toman',
+    b5n:'Pistachio Roll', b5l:'Pistachio Roll', b5d:'Danish pastry rolled with Iranian pistachio cream and rosewater aroma.', b5p:'65,000 Toman',
+    b6n:'Cinnamon Roll', b6l:'Cinnamon Roll', b6d:'Warm, soft cinnamon roll topped with cream cheese icing.', b6p:'55,000 Toman',
+    tSig:'Signature', tDes:'Dessert', tUniq:'Unique', tFresh:'Fresh', tTrad:'Traditional'
   },
   tr: {
-    dir: 'ltr',
-    fontTitle: 'font-playfair',
-    title: 'DARBARİ',
-    subtitle: 'Mutlak karanlıkta bir başlangıç',
-    scroll: 'KEŞFETMEK İÇİN KAYDIRIN',
-    selectCategory: 'GÖRMEK İÇİN KATEGORİ SEÇİN',
-    tabs: { bakery: 'Pastane', cold: 'Soğuk Kahve', hot: 'Sıcak Kahve' },
-    categories: {
-      bakery: [
-        { name: 'Klasik Kruvasan', price: '95', desc: 'Tereyağlı ve kat kat, günlük taze fırınlanmış' },
-        { name: 'Belçika Çikolatalı Kek', price: '145', desc: '%60 akışkan çikolata dolgulu kadife doku' },
-        { name: 'San Sebastian Cheesecake', price: '160', desc: 'Sıcak bitter çikolata soslu yanık cheesecake' }
-      ],
-      cold: [
-        { name: 'Nitro Cold Brew', price: '160', desc: '18 saat soğuk demlenmiş, kremsi nitro doku' },
-        { name: 'Darbari Iced Latte', price: '130', desc: 'Çift shot Arabica, taze süt ve buz' },
-        { name: 'Espresso Tonik', price: '140', desc: 'Tek kökenli espresso, tonik suyu ve misket limonu' }
-      ],
-      hot: [
-        { name: 'Altın Latte', price: '250', desc: 'Özel espresso, safranlı süt, 24 ayar yenilebilir altın' },
-        { name: 'Espresso Single / Double', price: '75 / 90', desc: '%100 Arabica çekirdeklerinden hassas özütleme' },
-        { name: 'İtalyan Cappuccino', price: '115', desc: 'Dengeli espresso ve ipeksi süt köpüğü' }
-      ]
-    }
+    hero_lbl:'NAN DARBARI', skip:'Menüyü Gör',
+    nav_hot:'Sıcak İçecekler', nav_cold:'Soğuk İçecekler', nav_bakery:'Fırın & Tatlılar',
+    about_title:'Sadece Bir Kafe Değil', about_desc:'Nan Darbari taze ekmek, sıcak hamur işleri, lezzetli kahve ve birkaç dakikalık huzur için bir yerdir. Her şey sıradan olmayacak şekilde düzenlendi; sıcak ekmeğin kokusundan yanındaki bir fincan kahveye kadar.',
+    cat_hot:'Sıcak', cat_cold:'Soğuk', cat_bak:'Fırın', hot_title:'Sıcak İçecekler', cold_title:'Soğuk İçecekler', bak_title:'Fırın & Tatlılar',
+    footer_sub:'Fırın & Kahve Evi', f_loc:'Konum', f_hrs:'Saatler', f_con:'Bize Ulaşın', f_insta:'Instagram', order_btn:'Kapat ve Dön',
+    footer_addr:'12 Fereshteh St, Tahran', footer_hrs:'Her gün 08:00 — 23:00',
+    h1n:'Espresso', h1l:'Espresso', h1d:'Ciddi bir başlangıç için mükemmel, zengin ve aromatik espresso.', h1p:'45.000 Tümen',
+    h2n:'Americano', h2l:'Americano', h2d:'Sıcak su üzerine double espresso, pürüzsüz ve uzun.', h2p:'50.000 Tümen',
+    h3n:'Flat White', h3l:'Flat White', h3d:'Çift shot, ipeksi mikroköpük — kremsi ve güçlü.', h3p:'65.000 Tümen',
+    h4n:'Latte', h4l:'Latte', h4d:'Buharda pişirilmiş süt ve yumuşak köpüklü pürüzsüz espresso.', h4p:'60.000 Tümen',
+    h5n:'Persian Coffee', h5l:'Fars Kahvesi', h5d:'Kakuleli sıcak ve aromatik kahve; sade ve keyifli.', h5p:'55.000 Tümen',
+    h6n:'Cardamom Latte', h6l:'Kakule Latte', h6d:'Kakule kokulu yumuşak latte; farklı zevkler için özel bir seçim.', h6p:'68.000 Tümen',
+    c1n:'Cold Brew', c1l:'Soğuk Demleme', c1d:'24 saatlik soğuk demleme — pürüzsüz ve acısız.', c1p:'65.000 Tümen',
+    c2n:'Iced Latte', c2l:'Buzlu Latte', c2d:'Buzun üzerine taze espresso, tam yağlı süt — sade ve kusursuz.', c2p:'60.000 Tümen',
+    c3n:'Affogato', c3l:'Affogato', c3d:'Vanilyalı dondurmanın üzerine sıcak espresso.', c3p:'80.000 Tümen',
+    c4n:'Rose Cold Foam', c4l:'Gül Soğuk Köpük', c4d:'Gül suyu soğuk köpüklü cold brew — zarif ve kokulu.', c4p:'85.000 Tümen',
+    c5n:'Iced Americano', c5l:'Buzlu Americano', c5d:'Buz üzerinde espresso ve soğuk su, canlandırıcı.', c5p:'55.000 Tümen',
+    c6n:'Sparkling Espresso', c6l:'Köpüklü Espresso', c6d:'Limon kabuğuyla köpüklü su üzerinde espresso.', c6p:'70.000 Tümen',
+    b1n:'Saffron Croissant', b1l:'Safran Kruvasanı', b1d:'Orijinal safran kreması dolgulu tereyağlı çıtır kruvasan.', b1p:'55.000 Tümen',
+    b2n:'Persian Breakfast', b2l:'İran Kahvaltısı', b2d:'Yerel tereyağı, ceviz ve dağ balı ile taze Barberi ekmeği.', b2p:'85.000 Tümen',
+    b3n:'Almond Tart', b3l:'Badem Tart', b3d:'Tereyağlı hamur, badem frangipane ve kayısı reçeli.', b3p:'70.000 Tümen',
+    b4n:'Belgian Brownie', b4l:'Bitter Çikolatalı Brownie', b4d:'Belçika çikolatası ile yumuşak brownie, ıslak ve zengin.', b4p:'60.000 Tümen',
+    b5n:'Pistachio Roll', b5l:'Antep Fıstıklı Rulo', b5d:'Gül suyu ve İran fıstık kremalı Danimarkalı hamur.', b5p:'65.000 Tümen',
+    b6n:'Cinnamon Roll', b6l:'Tarçınlı Rulo', b6d:'Krem peynir kremalı sıcak, yumuşak tarçınlı rulo.', b6p:'55.000 Tümen',
+    tSig:'İmza', tDes:'Tatlı', tUniq:'Eşsiz', tFresh:'Taze', tTrad:'Geleneksel'
   }
 };
 
-const Icons = {
-  bakery: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 mb-3">
-      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" strokeOpacity="0.2" fill="currentColor" fillOpacity="0.05"/>
-      <path d="M7 14C7 14 8.5 15.5 12 15.5C15.5 15.5 17 14 17 14" />
-      <path d="M8 11.5C8 11.5 9.5 13 12 13C14.5 13 16 11.5 16 11.5" />
-      <path d="M9.5 9C9.5 9 10.5 10.5 12 10.5C13.5 10.5 14.5 9 14.5 9" />
-    </svg>
-  ),
-  cold: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 mb-3">
-      <path d="M10 2L14 2" />
-      <path d="M12 2L12 6" />
-      <path d="M6 6H18L16.5 22H7.5L6 6Z" fill="currentColor" fillOpacity="0.05" />
-      <path d="M8 12L10 16" strokeOpacity="0.5"/>
-      <path d="M16 12L14 16" strokeOpacity="0.5"/>
-    </svg>
-  ),
-  hot: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 mb-3">
-      <path d="M6 8H17V15C17 17.2091 15.2091 19 13 19H10C7.79086 19 6 17.2091 6 15V8Z" fill="currentColor" fillOpacity="0.05" />
-      <path d="M17 11H19C20.1046 11 21 10.1046 21 9C21 7.89543 20.1046 7 19 7H17" />
-      <path d="M9 3V4" />
-      <path d="M13 2V4" />
-    </svg>
-  )
-};
+document.addEventListener("DOMContentLoaded", function() {
+  
+  // Reveal Animations
+  setTimeout(() => { document.querySelectorAll('.rv').forEach(el => el.classList.add('vis')); }, 800);
+  if ('IntersectionObserver' in window) {
+    const rvObs = new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); } });
+    }, { threshold: 0.05, rootMargin: "50px" });
+    document.querySelectorAll('.rv').forEach(e => rvObs.observe(e));
+  }
 
-export default function App() {
-  // GitHub Pages fix: Persist language in localStorage
-  const [lang, setLang] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('darbari_lang') || 'fa';
-    }
-    return 'fa';
+  // --- Modal Logic (سیستم پاپ‌آپ) ---
+  const modal = document.getElementById('item-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalLocal = document.getElementById('modal-local');
+  const modalDesc = document.getElementById('modal-desc');
+  const modalPrice = document.getElementById('modal-price');
+  const modalIcon = document.getElementById('modal-icon');
+
+  function openModal(id, cat) {
+    const lang = document.documentElement.lang || 'fa';
+    const t = T[lang];
+    if(!t) return;
+    
+    modalTitle.textContent = t[id+'n'] || '';
+    modalLocal.textContent = t[id+'l'] || '';
+    modalDesc.textContent = t[id+'d'] || '';
+    modalPrice.textContent = t[id+'p'] || '';
+    
+    // تغییر آیکون هدر پاپ‌آپ بر اساس دسته‌بندی
+    modalIcon.innerHTML = `<use href="#icon-${cat}"></use>`;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // توقف اسکرول صفحه زیرین
+  }
+
+  window.closeModal = function() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // اضافه کردن قابلیت کلیک به تمام کارت‌های منو
+  document.querySelectorAll('.mi').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-item-id');
+      const cat = card.getAttribute('data-cat');
+      if(id) openModal(id, cat);
+    });
   });
 
-  const [activeTab, setActiveTab] = useState(null);
-  const videoRef = useRef(null);
-  const menuSectionRef = useRef(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const t = menuData[lang];
+  // --- اسکرول سینمایی نرم‌تر ---
+  function smoothCinematicScrollWithPause(finalY) {
+    const startY = window.scrollY || window.pageYOffset;
+    const wrap = document.getElementById('cinematic-wrap');
+    const maxCinematicScroll = wrap.offsetHeight - window.innerHeight;
+    const logoY = maxCinematicScroll * 0.90; 
 
-  // Sync Language changes to DOM and localStorage
-  useEffect(() => {
-    localStorage.setItem('darbari_lang', lang);
-    document.documentElement.dir = menuData[lang].dir;
-    document.documentElement.lang = lang;
-  }, [lang]);
+    // زمان‌ها کمی طولانی‌تر و ملایم‌تر شدند
+    const phase1Duration = 3800; // حرکت اول
+    const pauseDuration = 2000;  // مکث
+    const phase2Duration = 2800; // حرکت نهایی
+    const totalDuration = phase1Duration + pauseDuration + phase2Duration;
+    let startTime = null;
 
-  // Cinematic Scroll Video Engine
-  useEffect(() => {
-    let ticking = false;
-    if (videoRef.current) {
-      videoRef.current.pause();
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const timeElapsed = timestamp - startTime;
+      let currentY = startY;
+
+      if (timeElapsed <= phase1Duration) {
+        let progress = timeElapsed / phase1Duration;
+        let ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        currentY = startY + (logoY - startY) * ease;
+      } 
+      else if (timeElapsed > phase1Duration && timeElapsed <= (phase1Duration + pauseDuration)) {
+        currentY = logoY; 
+      } 
+      else if (timeElapsed > (phase1Duration + pauseDuration) && timeElapsed <= totalDuration) {
+        let phase3Elapsed = timeElapsed - (phase1Duration + pauseDuration);
+        let progress = phase3Elapsed / phase2Duration;
+        let ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        currentY = logoY + (finalY - logoY) * ease;
+      } else {
+        currentY = finalY;
+      }
+
+      window.scrollTo(0, currentY);
+      if (timeElapsed < totalDuration) {
+        window.requestAnimationFrame(step);
+      }
     }
+    window.requestAnimationFrame(step);
+  }
 
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollPos = window.scrollY;
-          const cinematicHeight = window.innerHeight * 3;
-          const progress = Math.min(scrollPos / cinematicHeight, 1);
-          
-          setScrollProgress(progress);
-
-          if (videoRef.current && videoRef.current.duration) {
-            videoRef.current.currentTime = videoRef.current.duration * progress;
-          }
-
-          ticking = false;
-        });
-        ticking = true;
+  const skipMenuEl = document.getElementById('skip-menu');
+  if(skipMenuEl){
+    skipMenuEl.addEventListener('click', () => {
+      const menu = document.getElementById('about-brand');
+      if(menu) {
+        const targetY = menu.getBoundingClientRect().top + window.scrollY;
+        smoothCinematicScrollWithPause(targetY);
       }
-    };
+    });
+  }
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // NAVIGATION PILL LOGIC
+  const gnavBtns = document.querySelectorAll('.gn-btn');
+  const pill = document.getElementById('gnav-pill');
+  const innerNav = document.querySelector('.gnav-inner');
 
-  const handleTabClick = (tabKey) => {
-    setActiveTab(prev => prev === tabKey ? null : tabKey);
-    setTimeout(() => {
-      if (menuSectionRef.current) {
-        menuSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function movePillTo(btn){
+    if(!pill || !btn || !innerNav) return;
+    const innerRect = innerNav.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    pill.style.left = (btnRect.left - innerRect.left) + 'px';
+    pill.style.width = btnRect.width + 'px';
+  }
+
+  gnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      gnavBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active'); movePillTo(btn);
+      const target = document.getElementById(btn.dataset.target);
+      if(target) {
+        const offset = window.innerWidth < 850 ? 60 : 120;
+        const top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({top: top, behavior: 'smooth'});
       }
-    }, 150);
-  };
+    });
+  });
 
-  // Helper variables for typography rules (Fixes disconnected Persian letters)
-  const isFa = lang === 'fa';
-  const subtitleSpacing = isFa ? 'tracking-normal' : 'tracking-[0.3em]';
-  const elementSpacing = isFa ? 'tracking-normal' : 'tracking-[0.2em]';
+  function updateActiveNav(){
+    let currentId = 'hot';
+    const sections = ['hot', 'cold', 'bakery'];
+    const triggerPoint = window.innerHeight * 0.5; 
+    
+    for(let i = sections.length - 1; i >= 0; i--){
+      const section = document.getElementById(sections[i]);
+      if(section) {
+        const rect = section.getBoundingClientRect();
+        if(rect.top <= triggerPoint) { 
+          currentId = sections[i];
+          break;
+        }
+      }
+    }
+    
+    gnavBtns.forEach(btn => {
+      const isActive = btn.dataset.target === currentId;
+      btn.classList.toggle('active', isActive);
+      if(isActive) movePillTo(btn);
+    });
+  }
 
-  return (
-    <div dir={t.dir} className="min-h-screen bg-[#050505] text-[#FAF9F6] font-sans selection:bg-[#D4AF37] selection:text-black">
+  // CANVAS LOGIC
+  const canvas = document.getElementById('c');
+  let ctx, W, H, dpr;
+  let isCanvasActive = true;
+
+  let targetScroll = 0;
+  let currentScroll = 0;
+
+  function getScrollP(){
+    const wrap = document.getElementById('cinematic-wrap'); if (!wrap) return 0;
+    const maxScroll = wrap.offsetHeight - window.innerHeight; if(maxScroll <= 0) return 0;
+    return Math.max(0, Math.min(1, (window.scrollY || window.pageYOffset) / maxScroll));
+  }
+  
+  targetScroll = getScrollP();
+  currentScroll = targetScroll;
+
+  if(canvas) {
+    ctx = canvas.getContext('2d', { alpha: false });
+    function resize(){ 
+      dpr = window.devicePixelRatio || 1;
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); 
+    }
+    resize(); window.addEventListener('resize', resize);
+
+    if('IntersectionObserver' in window) {
+      const canvasObs = new IntersectionObserver(entries => { isCanvasActive = entries[0].isIntersecting; });
+      canvasObs.observe(document.getElementById('cinematic-wrap'));
+    }
+  }
+
+  const C = { bg: [2, 4, 9], bgMid: [8, 16, 30], gold: [212, 175, 55], goldDim: [117, 94, 29], bean1: [212, 175, 55], bean2: [117, 94, 29], bean3: [30, 20, 10] };
+  function rgb(c,a=1){return `rgba(${c[0]},${c[1]},${c[2]},${a})`;}
+
+  function createGlow(x, y, r, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(212, 175, 55, ${alpha})`); g.addColorStop(0.3, `rgba(212, 175, 55, ${alpha * 0.4})`); g.addColorStop(1, 'rgba(212, 175, 55, 0)'); return g;
+  }
+
+  function drawBean(x, y, sz, angle, alpha) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.ellipse(0, 0, sz * 0.52, sz, 0, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(-sz * 0.15, -sz * 0.25, sz * 0.05, 0, 0, sz);
+    g.addColorStop(0, rgb(C.bean1)); g.addColorStop(0.4, rgb(C.bean2)); g.addColorStop(1, rgb(C.bean3));
+    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, -sz * 0.7); ctx.bezierCurveTo(sz * 0.1, -sz * 0.25, sz * 0.1, sz * 0.25, 0, sz * 0.7);
+    ctx.strokeStyle = 'rgba(10,5,2,0.8)'; ctx.lineWidth = sz * 0.06; ctx.stroke(); ctx.restore();
+  }
+
+  function drawCup(cx, cy, fillPct, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(cx, cy); ctx.scale(1.15, 1.15); ctx.translate(-cx, -cy);
+    const w = 110, h = 100; 
+    const sg = ctx.createRadialGradient(cx, cy + h/2 + 10, 0, cx, cy + h/2 + 10, w/2 + 25);
+    sg.addColorStop(0, rgb(C.gold, 0.2)); sg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.ellipse(cx, cy + h/2 + 10, w/2 + 22, 10, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx - w/2, cy - h/2); ctx.lineTo(cx - w/2 + 16, cy + h/2); ctx.lineTo(cx + w/2 - 16, cy + h/2); ctx.lineTo(cx + w/2, cy - h/2); ctx.closePath();
+    const bg = ctx.createLinearGradient(cx - w/2, 0, cx + w/2, 0);
+    bg.addColorStop(0, '#03060C'); bg.addColorStop(0.3, '#0A1220'); bg.addColorStop(0.7, '#0A1220'); bg.addColorStop(1, '#03060C');
+    ctx.fillStyle = bg; ctx.fill(); ctx.strokeStyle = rgb(C.gold, 0.4); ctx.lineWidth = 1.5; ctx.stroke();
+
+    if (fillPct > 0) {
+      const lh = Math.max(4, (h - 10) * fillPct), ly = cy + h/2 - 5 - lh, tw = (w - 32) * (1 - fillPct * 0.5) + 16; 
+      ctx.beginPath(); ctx.moveTo(cx - tw/2, ly); ctx.lineTo(cx + tw/2, ly); ctx.lineTo(cx + w/2 - 18, cy + h/2 - 5); ctx.lineTo(cx - w/2 + 18, cy + h/2 - 5); ctx.closePath();
+      const lg = ctx.createLinearGradient(0, ly, 0, cy + h/2); lg.addColorStop(0, 'rgba(25, 18, 8, 0.95)'); lg.addColorStop(1, 'rgba(5, 3, 1, 0.98)'); ctx.fillStyle = lg; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx, ly + 3, tw/2 - 3, 5, 0, 0, Math.PI*2);
+      const cg = ctx.createRadialGradient(cx - 8, ly, 0, cx, ly + 3, tw/2);
+      cg.addColorStop(0, rgb(C.gold, 0.8)); cg.addColorStop(0.4, rgb(C.goldDim, 0.5)); cg.addColorStop(1, rgb(C.gold, 0.15)); ctx.fillStyle = cg; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(cx + w/2 + 14, cy + 5, 22, -0.6, 0.6); ctx.strokeStyle = rgb(C.gold, 0.6); ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.stroke(); ctx.restore();
+  }
+
+  function drawSteam(cx, cy, alpha) {
+    for (let i = 0; i < 4; i++) {
+      const ox = (i - 1.5) * 22, t = Date.now() * 0.0008; ctx.save(); ctx.globalAlpha = Math.max(0, alpha * 0.4); ctx.beginPath();
+      ctx.moveTo(cx + ox, cy); ctx.bezierCurveTo(cx + ox + Math.sin(t + i) * 15, cy - 60, cx + ox - Math.sin(t + i + 1) * 15, cy - 120, cx + ox, cy - 160);
+      const sg = ctx.createLinearGradient(0, cy, 0, cy - 160); sg.addColorStop(0, rgb(C.gold, 0.7)); sg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.strokeStyle = sg; ctx.lineWidth = 8 + i * 1.5; ctx.stroke(); ctx.restore();
+    }
+  }
+
+  const isMobile = window.innerWidth < 768;
+  const BOKEH = [];
+  const bokehCount = isMobile ? 8 : 18;
+  for(let i=0; i < bokehCount; i++){ BOKEH.push({ x: Math.random(), y: Math.random(), s: 3 + Math.random()*12, vy: -0.0005 - Math.random()*0.0015, vx: (Math.random()-0.5)*0.0005, phase: Math.random()*Math.PI*2 }); }
+
+  let tick = 0;
+  const startUI = document.getElementById('start-ui');
+  const glassNav = document.getElementById('glass-nav');
+  let navShown = false;
+
+  window.addEventListener('scroll', () => {
+    targetScroll = getScrollP();
+    if(startUI) {
+      if(targetScroll > 0.05) startUI.classList.add('hidden');
+      else startUI.classList.remove('hidden');
+    }
+    const progBar = document.getElementById('prog-bar');
+    if(progBar) progBar.style.width = (targetScroll*100) + '%';
+    
+    if(targetScroll >= 0.45 && !navShown){ navShown=true; if(glassNav) glassNav.classList.add('show'); }
+    else if(targetScroll < 0.45 && navShown){ navShown=false; if(glassNav) glassNav.classList.remove('show'); }
+    
+    updateActiveNav();
+  });
+
+  function render(){
+    if(ctx && isCanvasActive) {
+      tick++;
+      currentScroll += (targetScroll - currentScroll) * 0.08; 
+      const sp = currentScroll;
       
-      {/* Dynamic Styles including robust Vazirmatn Import */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Vazirmatn:wght@200;300;400;600;700&display=swap');
+      ctx.fillStyle = rgb(C.bg); 
+      ctx.fillRect(0,0,W,H);
+
+      if (sp < 0.6) {
+        let p = Math.min(1, sp / 0.5); 
+        const gr = ctx.createRadialGradient(W/2, H*0.5, 0, W/2, H*0.5, Math.max(W,H));
+        gr.addColorStop(0, rgb(C.gold, 0.18 * (1-p)));
+        gr.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gr; 
+        ctx.fillRect(0,0,W,H);
         
-        .font-vazirmatn { font-family: 'Vazirmatn', sans-serif; }
-        .font-playfair { font-family: 'Playfair Display', serif; }
+        let sz = 38 + (p * 110); 
+        let angle = Math.PI*0.1 + (p * Math.PI * 2); 
+        let alpha = p < 0.7 ? 1 : Math.max(0, 1 - ((p-0.7)/0.3)); 
+        let yPos = H*0.5 + (p * H*0.1); 
         
-        .glass-panel {
-          background: rgba(20, 20, 20, 0.4);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(212, 175, 55, 0.1);
+        if (alpha > 0) drawBean(W/2, yPos, sz, angle, alpha);
+      }
+
+      if (sp > 0.1 && sp < 0.9) {
+        let p = (sp - 0.1) / 0.8; 
+        let bokehAlpha = Math.sin(p * Math.PI); 
+        BOKEH.forEach(b => {
+          b.y += b.vy; b.x += b.vx; if(b.y < -0.1) b.y = 1.1; if(b.x < -0.1) b.x = 1.1; if(b.x > 1.1) b.x = -0.1;
+          const alpha = (0.15 + Math.sin(tick*0.02 + b.phase)*0.1) * bokehAlpha;
+          ctx.beginPath(); ctx.arc(b.x*W, b.y*H, b.s, 0, Math.PI*2); ctx.fillStyle = createGlow(b.x*W, b.y*H, b.s*2, alpha); ctx.fill();
+        });
+      }
+
+      if (sp > 0.4) {
+        let p = Math.min(1, Math.max(0, (sp - 0.4) / 0.6));
+        const cx2 = W/2, cy2 = H*0.55;
+        
+        const bg = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, W*0.5);
+        bg.addColorStop(0, rgb(C.bgMid, p*0.85)); bg.addColorStop(0.6, rgb(C.bg, p)); bg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+        const auraAlpha = Math.max(0, (sp - 0.7) / 0.3);
+        const glow = ctx.createRadialGradient(W/2, H*0.4, 0, W/2, H*0.4, W*0.4);
+        glow.addColorStop(0, `rgba(212, 175, 55, ${auraAlpha * 0.18})`);
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0,0,W,H);
+
+        if (p > 0.1 && p < 0.9) {
+          const streamAlpha = Math.sin(Math.max(0, Math.min(1, (p - 0.1) / 0.8)) * Math.PI); 
+          ctx.save(); ctx.globalAlpha = streamAlpha;
+          const str = ctx.createLinearGradient(cx2, -50, cx2, cy2 + 10); str.addColorStop(0, rgb(C.gold, 0.8)); str.addColorStop(1, rgb(C.goldDim, 0.9)); ctx.fillStyle = str;
+          const wobble = Math.sin(tick * 0.2) * 1.5; ctx.beginPath(); ctx.moveTo(cx2 - 2 + wobble, -50); ctx.lineTo(cx2 + 2 + wobble, -50); ctx.lineTo(cx2 + 1, cy2 + 15); ctx.lineTo(cx2 - 1, cy2 + 15); ctx.fill(); ctx.restore();
         }
         
-        .glass-panel.active {
-          background: rgba(212, 175, 55, 0.08);
-          border-color: rgba(212, 175, 55, 0.6);
-          box-shadow: 0 0 40px rgba(212, 175, 55, 0.1), inset 0 0 20px rgba(212, 175, 55, 0.05);
+        const fillPercentage = Math.max(0, Math.min(1, (p - 0.1) / 0.7)); 
+        drawCup(cx2, cy2 + 20, fillPercentage, p);
+        if (p > 0.3) drawSteam(cx2, cy2 - 35, Math.max(0, Math.min(1, (p - 0.3) / 0.7)));
+      }
+
+      const finalEl = document.getElementById('s-final');
+      if (finalEl) {
+        if (sp > 0.85) {
+           const textAlpha = Math.max(0, Math.min(1, (sp - 0.85) / 0.15));
+           finalEl.style.opacity = textAlpha;
+           finalEl.style.transform = `translateY(${(1-textAlpha)*20}px)`;
+        } else {
+           finalEl.style.opacity = 0;
         }
+      }
+    }
+    requestAnimationFrame(render);
+  }
+  
+  requestAnimationFrame(render);
 
-        @keyframes slideUpFade {
-          0% { opacity: 0; transform: translateY(30px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-reveal { animation: slideUpFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-      `}} />
+  window.setLang = function(lang){
+    document.querySelectorAll('.lb').forEach(b => { b.classList.toggle('active', b.dataset.lang === lang); });
+    
+    document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+    localStorage.setItem('nandarbari_lang', lang);
+    
+    const t = T[lang]; if(!t) return;
+    
+    document.querySelectorAll('[data-i]').forEach(el => {
+      const k = el.getAttribute('data-i');
+      if(t[k]) {
+        if(el.dataset.html === "true") el.innerHTML = t[k];
+        else el.textContent = t[k];
+      }
+    });
 
-      {/* --- 1. Fixed Video Background --- */}
-      <div className="fixed top-0 left-0 w-full h-full z-0 bg-black">
-        <video 
-          ref={videoRef}
-          muted 
-          playsInline 
-          preload="auto"
-          src="video.mp4" 
-          className="w-full h-full object-cover transition-all duration-300 ease-out"
-          style={{
-            transform: `scale(${1 + (scrollProgress * 0.1)})`,
-            opacity: 1 - (scrollProgress * 0.5)
-          }}
-        >
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-coffee-beans-falling-into-a-grinder-40066-large.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#050505]"></div>
-      </div>
+    const langSw = document.getElementById('lang-sw');
+    if (langSw) langSw.classList.add('show');
+    
+    setTimeout(() => { const activeBtn = document.querySelector('.gn-btn.active'); if(activeBtn) movePillTo(activeBtn); }, 150);
+  };
+  
+  const savedLang = localStorage.getItem('nandarbari_lang') || 'fa';
+  document.querySelectorAll('.lb').forEach(b => b.addEventListener('click', (e) => setLang(e.target.dataset.lang)));
+  setLang(savedLang);
+});
+</script>
 
-      {/* --- 2. Cinematic Scroll Space --- */}
-      <div className="relative z-10 w-full h-[300vh]">
-        <div className="sticky top-0 h-screen flex flex-col justify-center items-center pointer-events-none">
-          
-          <div className="absolute top-10 pointer-events-auto flex justify-center gap-6 font-playfair tracking-widest text-sm z-50">
-            {['tr', 'en', 'fa'].map((l) => (
-              <button 
-                key={l}
-                onClick={() => setLang(l)}
-                className={`pb-1 uppercase transition-all duration-300 border-b-2 ${lang === l ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-white/50 border-transparent hover:text-white'}`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-
-          <div 
-            className="text-center px-4"
-            style={{
-              opacity: Math.max(1 - (scrollProgress * 3), 0),
-              transform: `translateY(${scrollProgress * 200}px)`
-            }}
-          >
-            <h1 className={`text-6xl sm:text-8xl md:text-9xl font-bold text-white mb-6 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] ${t.fontTitle} tracking-tight leading-normal`}>
-              {t.title}
-            </h1>
-            <p className={`text-sm sm:text-lg md:text-xl text-[#D4AF37] font-light uppercase drop-shadow-md ${subtitleSpacing}`}>
-              {t.subtitle}
-            </p>
-          </div>
-
-          <div 
-            className={`absolute bottom-12 text-xs text-[#D4AF37] uppercase flex flex-col items-center gap-2 animate-pulse ${elementSpacing}`}
-            style={{ opacity: Math.max(1 - (scrollProgress * 5), 0) }}
-          >
-            <span>{t.scroll}</span>
-            <span className="text-lg mt-1">↓</span>
-          </div>
-        </div>
-      </div>
-
-      {/* --- 3. Interactive Menu Section --- */}
-      <div 
-        ref={menuSectionRef}
-        className="relative z-20 bg-[#050505]/90 backdrop-blur-2xl shadow-[0_-30px_60px_rgba(0,0,0,0.8)] min-h-screen pt-24 pb-32 px-4 sm:px-8 flex flex-col items-center border-t border-[#D4AF37]/20"
-      >
-        <div className="w-20 h-1 bg-[#D4AF37]/30 rounded-full mb-16"></div>
-
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          {['bakery', 'cold', 'hot'].map((tabKey) => {
-            const isActive = activeTab === tabKey;
-            return (
-              <button
-                key={tabKey}
-                onClick={() => handleTabClick(tabKey)}
-                className={`glass-panel group relative overflow-hidden rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-500 ease-out transform ${isActive ? 'active scale-105' : 'hover:-translate-y-2 hover:border-[#D4AF37]/40'} `}
-              >
-                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-0'}`}></div>
-                
-                <div className={`transition-colors duration-500 ${isActive ? 'text-[#D4AF37]' : 'text-gray-400 group-hover:text-[#F9E27D]'}`}>
-                  {Icons[tabKey]}
-                </div>
-
-                <h3 className={`text-xl font-bold mt-4 transition-colors duration-500 ${isFa ? 'font-vazirmatn' : 'font-playfair'} ${isActive ? 'text-[#F9E27D]' : 'text-white'}`}>
-                  {t.tabs[tabKey]}
-                </h3>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="w-full max-w-5xl relative min-h-[400px]">
-          {activeTab ? (
-            <div key={activeTab} className="animate-reveal w-full bg-[#0a0a0a]/50 p-8 md:p-12 rounded-3xl border border-white/5">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10">
-                {t.categories[activeTab].map((item, idx) => (
-                  <div key={idx} className="group relative transition-all duration-300">
-                    <div className="flex justify-between items-baseline mb-2">
-                      <h3 className="text-lg md:text-xl font-bold text-[#FAF9F6] transition-colors group-hover:text-[#D4AF37]">
-                        {item.name}
-                      </h3>
-                      <div className="flex-grow border-b border-dotted border-white/20 mx-4 relative top-[-6px] transition-colors group-hover:border-[#D4AF37]/40"></div>
-                      <span className="text-xl md:text-2xl text-[#F9E27D] font-vazirmatn font-bold whitespace-nowrap">
-                        {item.price}
-                      </span>
-                    </div>
-                    <p className="text-sm md:text-base text-gray-400 font-light leading-relaxed rtl:text-justify pl-4 rtl:pl-0 rtl:pr-4 border-l-2 rtl:border-l-0 rtl:border-r-2 border-transparent group-hover:border-[#D4AF37] transition-all">
-                      {item.desc}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[200px] text-gray-500 opacity-60">
-              <p className={`text-xl font-light uppercase ${elementSpacing} ${isFa ? 'font-vazirmatn' : 'font-playfair'}`}>
-                {t.selectCategory}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+</body>
+</html>
 
 
 ```
